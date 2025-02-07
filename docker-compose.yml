@@ -1,10 +1,10 @@
 services:
   asterisk:
-    image: asterisk:latest
+    build: ./asterisk_app
     container_name: asterisk
     volumes:
-      - ./asterisk_service/config:/etc/asterisk
-      - ./asterisk_service/scripts:/var/lib/asterisk/agi-bin
+#      - ./asterisk_app/config:/etc/asterisk
+      - ./asterisk_app/scripts:/var/lib/asterisk/agi-bin
     ports:
       - "5060:5060/udp"
       - "5038:5038"
