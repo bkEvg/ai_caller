@@ -1,11 +1,10 @@
-import asterisk.manager
+from asterisk.ami import AMIClient
 
-def on_event(event, manager):
-    print(f"Получен звонок: {event}")
+def on_event(event, source):
+    print(f"Получено событие: {event}")
 
-manager = asterisk.manager.Manager()
-manager.connect('localhost')
-manager.login('fastapi', 'mysecret')
+client = AMIClient(address='localhost', port=5038)
+client.login(username='fastapi', secret='mysecret')
 
-manager.register_event('*', on_event)
-manager.loop()
+client.add_event_listener(on_event)
+client.run()
