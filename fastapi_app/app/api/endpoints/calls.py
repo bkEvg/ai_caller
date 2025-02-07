@@ -1,23 +1,28 @@
 from fastapi.routing import APIRouter
-import asterisk.manager
+from asterisk.ami import AMIClient, AMIClientAdapter
 
 router = APIRouter()
+
+# Подключение к Asterisk AMI
+def connect_ami():
+    client = AMIClient(address='localhost', port=5038)
+    client.login(username='fastapi', secret='mysecret')
+    return client
 
 
 @router.post("/make_call")
 def make_call(phone_number: str):
-    manager = asterisk.manager.Manager()
-    manager.connect('localhost')
-    manager.login('fastapi', 'mysecret')
+    client = connect_ami()
+    adapter = AMIClientAdapter(client)
 
-    response = manager.originate(
-        channel=f'SIP/{phone_number}',
-        context='default',
-        exten='100',
-        priority=1,
-        caller_id='FastAPI',
-        timeout=30000
+    response = adapter.Originate(
+        Channel=f'SIP/{phone_number}',
+        Context='default',
+        Exten='100',
+        Priority=1,
+        CallerID='FastAPI',
+        Timeout=30000
     )
 
-    manager.close()
+    client.logoff()
     return {"status": "Call initiated", "response": response}
