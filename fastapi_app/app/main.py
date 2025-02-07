@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from api.routes import router
+from api.endpoints.calls import router
 
 app = FastAPI(title='SIP Bot API')
 
