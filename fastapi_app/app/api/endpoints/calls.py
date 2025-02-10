@@ -1,5 +1,5 @@
 from fastapi.routing import APIRouter
-from asterisk.ami import AMIClient, AMIClientAdapter
+from asterisk.ami import AMIClient, AMIClientAdapter, FutureResponse
 
 router = APIRouter()
 
@@ -9,20 +9,27 @@ def connect_ami():
     client.login(username='fastapi', secret='mysecret')
     return client
 
-
 @router.post("/make_call")
 def make_call(phone_number: str):
-    client = connect_ami()
-    adapter = AMIClientAdapter(client)
+    try:
+        # Подключаемся к AMI
+        client = connect_ami()
+        adapter = AMIClientAdapter(client)
 
-    response = adapter.Originate(
-        Channel=f'SIP/{phone_number}',
-        Context='default',
-        Exten='100',
-        Priority=1,
-        CallerID='FastAPI',
-        Timeout=30000
-    )
+        # Выполняем вызов
+        response = adapter.Originate(
+            Channel=f'SIP/{phone_number}',
+            Context='default',
+            Exten='100',
+            Priority=1,
+            CallerID='FastAPI',
+            Timeout=30000
+        )
+        # Отключаемся от AMI
+        client.logoff()
 
-    client.logoff()
-    return {"status": "Call initiated", "response": response}
+        return {"status": "Call initiated", "response": response.get_response()}
+
+    except Exception as e:
+        # Логируем ошибку и возвращаем сообщение об ошибке
+        return {"status": "Error", "message": str(e)}

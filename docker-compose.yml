@@ -3,7 +3,7 @@ services:
     build: ./asterisk_app
     container_name: asterisk
     volumes:
-#      - ./asterisk_app/config:/etc/asterisk
+      - ./asterisk_app/config:/etc/asterisk
       - ./asterisk_app/scripts:/var/lib/asterisk/agi-bin
     ports:
       - "5060:5060/udp"
