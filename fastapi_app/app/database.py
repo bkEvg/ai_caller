@@ -1,12 +1,22 @@
 from tortoise import Tortoise
 
-from constants import POSTGRES_URL
+from .constants import POSTGRES_URL
 
+TORTOISE_ORM = {
+    "connections": {
+        "default": POSTGRES_URL
+    },
+    "apps": {
+        "models": {
+            "models": [
+                "app.users.models",
+                "aerich.models"
+            ],
+            "default_connection": "default",
+        }
+    }
+}
 
 async def init_db():
-    """Инициализация бд, создание таблиц и тд."""
-    await Tortoise.init(
-        db_url=POSTGRES_URL,
-        modules={'models': ['app.models']}
-    )
-    await Tortoise.generate_schemas()
+    """Инициализация бд."""
+    await Tortoise.init(config=TORTOISE_ORM)

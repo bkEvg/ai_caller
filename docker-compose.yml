@@ -1,1 +1,18 @@
+volumes:
+  pg_data:
+
 services:
+  fast_api:
+    build: ./fastapi_app
+    env_file:
+      - ./.env
+    ports:
+      - '9000:9000'
+  postgres:
+    image: postgres:13-alpine
+    env_file:
+      - ./.env
+    ports:
+      - '5432:5432'
+    volumes:
+      - pg_data:/var/lib/postgresql/data
