@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from .api.users import router
+from .api.users import users_router
 from .database import init_db
 
 app = FastAPI(title='SIP Bot API')
@@ -9,7 +9,7 @@ app = FastAPI(title='SIP Bot API')
 async def startup():
     await init_db()
 
-app.include_router(router, prefix='/api/v1/users',)
+app.include_router(users_router, prefix='/api/v1/users',)
 
 
 if __name__ == '__main__':

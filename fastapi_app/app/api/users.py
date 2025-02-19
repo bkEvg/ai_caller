@@ -3,10 +3,10 @@ from fastapi.routing import APIRouter, HTTPException
 from ..users.models import User
 from ..users.schemas import UserCreate, UserRead
 
-router = APIRouter()
+users_router = APIRouter()
 
 
-@router.post('', response_model=UserRead)
+@users_router.post('', response_model=UserRead)
 async def create_user(user: UserCreate):
     """Создание пользователя."""
     user_exist = await User.filter(email=user.email).first()
@@ -15,7 +15,7 @@ async def create_user(user: UserCreate):
     new_user = await User.create(**user.dict())
     return UserRead.model_validate(new_user)
 
-@router.get('/{user_id}', response_model=UserRead)
+@users_router.get('/{user_id}', response_model=UserRead)
 async def get_user(user_id: int):
     """Получение пользователя."""
     user = await User.filter(id=user_id).first()

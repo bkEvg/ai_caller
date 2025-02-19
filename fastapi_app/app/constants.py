@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-BASE_DIR = Path(__file__).parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 PG_USER = os.environ.get('POSTGRES_USER')
 PG_PASS = os.environ.get('POSTGRES_PASSWORD')

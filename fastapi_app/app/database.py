@@ -10,6 +10,7 @@ TORTOISE_ORM = {
         "models": {
             "models": [
                 "app.users.models",
+                "app.roles.models",
                 "aerich.models"
             ],
             "default_connection": "default",
