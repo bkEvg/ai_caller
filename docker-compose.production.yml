@@ -1,6 +1,26 @@
+volumes:
+  front_static:
+
 services:
+  gateway:
+    image: bkEvg/ai_caller-gateway:latest
+    volumes:
+      - front_static:/var/www/frontend/
+    ports:
+      - 5060:80
+  front:
+    image: bkEvg/ai_caller-frontend:latest
+    command: cp -r /app/dist/. /static/
+    volumes:
+      - front_static:/static/
+  fast_api:
+    image: bkEvg/ai_caller-backend:latest
+    env_file:
+      - ./.env
+    ports:
+      - '9000:9000'
   audiosocket:
-    image: bkevg/ai_caller-media_sockets:latest
+    image: bkEvg/ai_caller-audio_socket:latest
     env_file:
       - ./.env
     ports:

@@ -1,12 +1,11 @@
 volumes:
-  pg_data:
   front_static:
 
 services:
   gateway:
     build: ./gateway
     volumes:
-      - front_static:/var/www/front/dist
+      - front_static:/var/www/frontend/
     ports:
       - 5060:80
   front:
