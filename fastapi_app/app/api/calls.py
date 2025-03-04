@@ -16,7 +16,8 @@ class CallRequest(BaseModel):
 async def create_call(request: CallRequest):
     # Инициализация клиента и WebSocket обработчика
     ari_client = AriClient(ARI_HOST, AUTH_HEADER)
-    ws_handler = WSHandler(WEBSOCKET_HOST, AUTH_HEADER, ari_client)
+    ws_handler = WSHandler(WEBSOCKET_HOST, AUTH_HEADER, ari_client,
+                           request.phone)
 
     # Подключаемся и начинаем слушать события
     asyncio.create_task(ws_handler.connect())
