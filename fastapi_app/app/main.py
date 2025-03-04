@@ -1,15 +1,20 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
-from .api.users import users_router
-from .database import init_db
+from .api.calls import calls_router
 
 app = FastAPI(title='SIP Bot API')
 
-@app.on_event('startup')
-async def startup():
-    await init_db()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-app.include_router(users_router, prefix='/api/v1/users',)
+
+app.include_router(calls_router, prefix='/api/v1/calls')
 
 
 if __name__ == '__main__':

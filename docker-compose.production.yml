@@ -1,0 +1,7 @@
+services:
+  audiosocket:
+    image: bkevg/ai_caller-media_sockets:latest
+    env_file:
+      - ./.env
+    ports:
+      - '7575:7575'

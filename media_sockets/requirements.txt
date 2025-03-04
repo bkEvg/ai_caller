@@ -1,0 +1,20 @@
+asyncio-dgram @ git+https://github.com/jsbronder/asyncio-dgram.git@6a798a3c1818eab4e7ae6dc7c83f5e85b9810fe8
+certifi==2025.1.31
+cffi==1.17.1
+charset-normalizer==3.4.1
+click==8.1.8
+gTTS==2.5.4
+idna==3.10
+pocketsphinx==5.0.4
+pycparser==2.22
+pydub==0.25.1
+requests==2.32.3
+sounddevice==0.5.1
+SpeechRecognition==3.14.1
+srt==3.5.3
+tqdm==4.67.1
+typing_extensions==4.12.2
+urllib3==2.3.0
+vosk==0.3.44
+webrtcvad==2.0.10
+websockets==15.0

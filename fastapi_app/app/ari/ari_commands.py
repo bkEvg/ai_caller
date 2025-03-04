@@ -1,95 +1,188 @@
-import requests
+from typing import Optional
+import asyncio
+
+import httpx
 import websockets
 import json
-import time
+import logging
 
-from .ari_config import (ARI_HOST, AUTH_HEADER, WEBSOCKET_HOST, SIP_ENDPOINT,
-                         STASIS_APP_NAME)
+from .ari_config import (ARI_HOST, SIP_ENDPOINT, STASIS_APP_NAME, EXTERNAL_HOST)
+
+logger = logging.getLogger(__name__)
+
+class AriClient:
+    """Клиент для работы с ARI."""
+
+    def __init__(self, base_url: str, headers: dict):
+        self.base_url = base_url
+        self.headers = headers
+        self.client = httpx.AsyncClient()
+
+    def _normalize_response(self, response) -> dict:
+        """Нормализуем ответ от ARI и проверяем статус."""
+        status = response.status_code
+        if not response:
+            return {}
+        if status != 200 and not 204:
+            raise RuntimeError(f"Ошибка от ARI: {response.text}")
+        return response.json() if response.text else {}
+
+    async def _send_request(self, url: str, method: str, data: Optional[
+            dict] = None) -> dict:
+        """Отправляем асинхронный запрос."""
+        if method.lower() == 'post':
+            response = await self.client.post(
+                url, json=data, headers=self.headers)
+        elif method.lower() == 'delete':
+            response = await self.client.delete(url)
+        else:
+            raise ValueError('Unsupported method')
+        return self._normalize_response(response)
+
+    async def create_channel(self, endpoint: str) -> dict:
+        """Создать канал."""
+        url = f'{self.base_url}/channels/create'
+        data = {
+            "endpoint": endpoint,
+            "app": STASIS_APP_NAME,
+            "timeout": 30
+        }
+        return await self._send_request(url, 'POST', data)
+
+    async def dial_channel(self, channel_id: str) -> None:
+        """Подключание канала."""
+        url = f"{self.base_url}/channels/{channel_id}/dial"
+        await self._send_request(url, "POST")
+
+    async def play_audio(self, channel_id: str) -> None:
+        """Воспроизвести звук."""
+        url = f"{self.base_url}/channels/{channel_id}/play"
+        data = {
+            "media": "sound:hello-world"  # http://217.114.3.34/audio-2.alaw
+        }
+        await self._send_request(url, 'POST', data)
+
+    async def record_call(
+            self, channel_id, filename="client_call_recording",
+            format="wav", beep=True, max_duration_seconds=0,
+            max_silence_seconds=0, if_exists="overwrite") -> dict:
+        """Запись звонка с динамическими параметрами."""
+        url = f"{ARI_HOST}/channels/{channel_id}/record"
+
+        data = {
+            "format": format,  # формат записи (например, wav или mp3)
+            "name": filename,  # имя файла записи
+            "beep": beep,  # флаг для воспроизведения сигнала перед записью
+            "maxDurationSeconds": max_duration_seconds,
+            # максимальная продолжительность записи
+            "maxSilenceSeconds": max_silence_seconds,
+            # максимальное время тишины, после которого запись завершится
+            "ifExists": if_exists
+            # что делать, если файл существует (overwrite или append)
+        }
+        await self._send_request(url, "POST", data)
+
+    async def hangup_call(self, channel_id: int) -> None:
+        """Завершение звонка."""
+        url = f"{self.base_url}/channels/{channel_id}"
+        await self._send_request(url, "DELETE")
+
+    async def create_bridge(self) -> str:
+        """Создает бридж, и возвращает его id."""
+        url = f"{self.base_url}/bridges"
+        response = await self._send_request(url, "POST", {"type": "mixing"})
+        return response['id']
+
+    async def add_channel_to_bridge(self, bridge_id: str,
+                                    channel_id: str) -> None:
+        """Добавить канал в бридж."""
+        url = f"{ARI_HOST}/bridges/{bridge_id}/addChannel"
+        data = {"channel": channel_id}
+        await self._send_request(url, "POST", data)
+
+    async def record_bridge(self, bridge_id: str, filename: str) -> None:
+        """Записать бридж."""
+        url = f"{ARI_HOST}/bridges/{bridge_id}/record"
+        data = {
+            "name": filename,
+            "format": "gsm",
+            "ifExists": "overwrite",
+            "beep": True
+        }
+        await self._send_request(url, "POST", data)
+
+    async def create_external_media(self):
+        url = f"{ARI_HOST}/channels/externalMedia"
+        data = {
+            "app": STASIS_APP_NAME,
+            "external_host": EXTERNAL_HOST,
+            "encapsulation": "audiosocket",
+            "transport": "tcp",
+            "format": "alaw",
+            "data": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+        }
+        return await self._send_request(url, 'POST', data)
+
+    async def create_snoop_on_channel(self, channel_id) -> dict:
+        url = f"{ARI_HOST}/channels/{channel_id}/snoop"
+        data = {
+            "spy": "both",
+            "whisper": "both",
+            "app": STASIS_APP_NAME
+        }
+        return await self._send_request(url, 'POST', data)
 
 
-# Функция для создания канала (звонка)
-def create_channel(endpoint: str):
-    """Создать канал."""
-    url = f"{ARI_HOST}/channels"
-    data = {
-        "endpoint": endpoint,
-        "app": STASIS_APP_NAME
-    }
-    response = requests.post(url, json=data, headers=AUTH_HEADER)
-    if response.status_code == 200:
-        return response.json()  # Возвращаем ID канала
-    else:
-        print("Ошибка при создании канала:", response.json())
-        return None
+class WSHandler:
+    """Обработчик WebSocket событий."""
 
+    def __init__(self, ws_host: str, headers: dict, ari_client: AriClient):
+        self.ws_host = ws_host
+        self.headers = headers
+        self.ari_client = ari_client
+        self.current_bridge_id = None
+        self.client_channel_id = None
+        self.snoop_channel_id = None
 
-# Функция для проигрывания аудио в канале
-def play_audio(channel_id):
-    """Проиграть запись в канале."""
-    url = f"{ARI_HOST}/channels/{channel_id}/play"
-    data = {
-        "media": "sound:queue-minutes"  # Путь к аудио файлу на Asterisk
-    }
-    response = requests.post(url, json=data, headers=AUTH_HEADER)
-    if response.status_code == 200:
-        print("Аудио проигрывается.")
-    else:
-        print("Ошибка при проигрывании аудио:", response.json())
-
-
-def record_call(channel_id):
-    """Запись звонка."""
-    url = f"{ARI_HOST}/recordings"
-    data = {
-        "channel": channel_id,
-        "format": "wav",  # Формат записи
-        "name": "client_call_recording"
-    }
-    response = requests.post(url, json=data, headers=AUTH_HEADER)
-    if response.status_code == 200:
-        print("Запись начата.")
-    else:
-        print("Ошибка при записи звонка:", response.json())
-
-
-# Завершаем звонок
-def hangup_call(channel_id):
-    """Завершение звонка."""
-    url = f"{ARI_HOST}/channels/{channel_id}"
-    response = requests.delete(url, headers=AUTH_HEADER)
-    if response.status_code == 200:
-        print("Звонок завершен.")
-    else:
-        print("Ошибка при завершении звонка:", response.json())
-
-
-async def connect_to_ari():
-    uri = f"{ARI_HOST}?app={STASIS_APP_NAME}"
-
-    async with websockets.connect(uri, extra_headers=AUTH_HEADER) as websocket:
-        print(f"Connected to ARI with app {STASIS_APP_NAME}")
-
-        # Слушаем события
+    async def handle_events(self, websocket):
+        """Обрабатываем события."""
         while True:
             message = await websocket.recv()
             event = json.loads(message)
-            print("Received event:", event)
-
-            # Обрабатываем событие ChannelCreated
-            if event['type'] == 'ChannelCreated':
+            logger.error(message)
+            if event['type'] == 'StasisStart':
                 channel_id = event['channel']['id']
-                print(f"New channel created: {channel_id}")
+                await asyncio.sleep(10)
+                await self.ari_client.dial_channel(channel_id)
 
-                # Проигрываем аудио после создания канала
-                play_audio(channel_id)
+            if event['type'] == 'Dial' and event['dialstatus'] == 'ANSWER':
+                await self.ari_client.play_audio(self.client_channel_id)
 
-                # Записываем разговор
-                print("Starting call recording...")
-                record_call(channel_id)
+    async def connect(self):
+        """Подключаемся по WebSocket и обрабатываем события."""
+        async with websockets.connect(
+                self.ws_host, additional_headers=self.headers) as websocket:
+            logger.error('Connected to ARI with app %s', STASIS_APP_NAME)
 
-                # Ждем некоторое время (например, 10 секунд), пока продолжается разговор
-                time.sleep(10)
+            self.current_bridge_id = await self.ari_client.create_bridge()
 
-                # Завершаем звонок
-                hangup_call(channel_id)
-                print(f"Call {channel_id} ended.")
+            logger.error(f'BRIDGE: {self.current_bridge_id}')
+
+            # Создаем канал для вызова, и цепляем к нему прослушку
+            client = await self.ari_client.create_channel(SIP_ENDPOINT)
+            self.client_channel_id = client['id']
+            logger.error(f'CLIENT_CHANNEL_ID: {self.client_channel_id}')
+            # snoop_channel = await self.ari_client.create_snoop_on_channel(
+            #     client['id'])
+            # self.snoop_channel_id = snoop_channel['id']
+            # logger.error(f"SOOP: {self.snoop_channel_id}")
+
+            await self.ari_client.add_channel_to_bridge(
+                self.current_bridge_id, self.client_channel_id)
+
+            # Создаем передачу потока во внешний ресурс
+            external_media = await self.ari_client.create_external_media()
+            await self.ari_client.add_channel_to_bridge(
+                self.current_bridge_id, external_media['id'])
+
+            await self.handle_events(websocket)

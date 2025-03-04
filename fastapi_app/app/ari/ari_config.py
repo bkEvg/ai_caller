@@ -6,13 +6,14 @@ from dotenv import load_dotenv
 load_dotenv()
 
 HOST = '31.129.35.221:8088'
+EXTERNAL_HOST = '217.114.3.34:7575'
 ARI_HOST = f"http://{HOST}/ari"
-WEBSOCKET_HOST = f"ws://{HOST}/events?app=fast_api"
 ARI_USER = "terra-user-01"
 ARI_PASSWORD = os.environ.get('ARI_PASS')
-
-SIP_ENDPOINT = 'SIP/phone101'
 STASIS_APP_NAME = 'fast_api'
+WEBSOCKET_HOST = f"ws://{HOST}/ari/events?app={STASIS_APP_NAME}"
+
+SIP_ENDPOINT = 'SIP/89232391892@terraai-test'
 # Кодируем данные для входа
 auth_bytes = f'{ARI_USER}:{ARI_PASSWORD}'.encode('utf-8')
 base64_auth = base64.b64encode(auth_bytes).decode('utf-8')
