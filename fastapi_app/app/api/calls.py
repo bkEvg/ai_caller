@@ -1,14 +1,19 @@
 import asyncio
 from fastapi import APIRouter
-from ..ari.ari_commands import AriClient, WSHandler
+from pydantic import BaseModel
 
+from ..ari.ari_commands import AriClient, WSHandler
 from ..ari.ari_config import (ARI_HOST, AUTH_HEADER, WEBSOCKET_HOST)
 
 calls_router = APIRouter()
 
 
+class CallRequest(BaseModel):
+    phone: str
+
+
 @calls_router.post('')
-async def create_call():
+async def create_call(request: CallRequest):
     # Инициализация клиента и WebSocket обработчика
     ari_client = AriClient(ARI_HOST, AUTH_HEADER)
     ws_handler = WSHandler(WEBSOCKET_HOST, AUTH_HEADER, ari_client)

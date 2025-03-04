@@ -6,7 +6,7 @@ import websockets
 import json
 import logging
 
-from .ari_config import (ARI_HOST, SIP_ENDPOINT, STASIS_APP_NAME, EXTERNAL_HOST)
+from .ari_config import (ARI_HOST, STASIS_APP_NAME, EXTERNAL_HOST)
 
 logger = logging.getLogger(__name__)
 
@@ -136,10 +136,13 @@ class AriClient:
 class WSHandler:
     """Обработчик WebSocket событий."""
 
-    def __init__(self, ws_host: str, headers: dict, ari_client: AriClient):
+    def __init__(self, ws_host: str, headers: dict, ari_client: AriClient,
+                 phone: str):
         self.ws_host = ws_host
         self.headers = headers
         self.ari_client = ari_client
+        self.phone = phone
+        self.sip_endpoint = f'SIP/{self.phone}@terraai-test'
         self.current_bridge_id = None
         self.client_channel_id = None
         self.snoop_channel_id = None
@@ -168,14 +171,10 @@ class WSHandler:
 
             logger.error(f'BRIDGE: {self.current_bridge_id}')
 
-            # Создаем канал для вызова, и цепляем к нему прослушку
-            client = await self.ari_client.create_channel(SIP_ENDPOINT)
+            # Создаем канал для вызова
+            client = await self.ari_client.create_channel(self.sip_endpoint)
             self.client_channel_id = client['id']
             logger.error(f'CLIENT_CHANNEL_ID: {self.client_channel_id}')
-            # snoop_channel = await self.ari_client.create_snoop_on_channel(
-            #     client['id'])
-            # self.snoop_channel_id = snoop_channel['id']
-            # logger.error(f"SOOP: {self.snoop_channel_id}")
 
             await self.ari_client.add_channel_to_bridge(
                 self.current_bridge_id, self.client_channel_id)
