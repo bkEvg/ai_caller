@@ -17,8 +17,6 @@ services:
     image: bkevg/ai_caller-backend:latest
     env_file:
       - ./.env
-    ports:
-      - '5000:9000'
   audiosocket:
     image: bkevg/ai_caller-audio_socket:latest
     env_file:

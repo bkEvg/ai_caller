@@ -8,7 +8,7 @@ function App() {
     console.log("Отправляем номер:", phone);
 
     try {
-      const response = await fetch("http://127.0.0.1:9000/api/v1/calls", {
+      const response = await fetch("http://217.114.9.31:4040/api/v1/calls", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
