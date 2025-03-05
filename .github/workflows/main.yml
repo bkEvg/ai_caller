@@ -82,3 +82,35 @@ jobs:
           context: ./media_sockets/
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/ai_caller-audio_socket:latest
+
+  deploy:
+    name: Deploy app to host
+    runs-on: ubuntu-latest
+    needs:
+      - build_and_push_audio_socket
+      - build_and_push_frontend
+      - build_and_push_gateway
+      - build_and_push_backend
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v2
+
+      - name: copy files to host
+        uses: appleboy/scp-action@master
+        with:
+          username: ${{ secrets.USER }}
+          host: ${{ secrets.HOST }}
+          key: ${{ secrets.SSH_KEY }}
+          source: "docker-compose.production.yml"
+          target: "ai_caller"
+      - name: Execute remote commands with ssh conn
+        uses: appleboy/ssh-action@master
+        with:
+          username: ${{ secrets.USER }}
+          password: ${{ secrets.HOST_PASSWORD }}
+          host: ${{ secrets.HOST }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd ai_caller
+            echo "${{ secrets.HOST_PASSWORD }}" | sudo -S docker compose -f docker-compose.production.yml pull
+            echo "${{ secrets.HOST_PASSWORD }}" | sudo -S docker compose -f docker-compose.production.yml up -d
