@@ -78,7 +78,7 @@ async def main():
                     packet = parser.parse_packet()
                     if not packet:
                         logger.error('There is not packet')
-                        return
+                        break  # Выходим из цикла, но не завершаем работу
                     packet_type, payload_length, payload = packet
 
                     # Обрабатываем разные типы пакетов
