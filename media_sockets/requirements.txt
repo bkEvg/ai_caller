@@ -5,10 +5,12 @@ charset-normalizer==3.4.1
 click==8.1.8
 gTTS==2.5.4
 idna==3.10
+numpy==2.2.3
 pocketsphinx==5.0.4
 pycparser==2.22
 pydub==0.25.1
 requests==2.32.3
+scipy==1.15.2
 sounddevice==0.5.1
 SpeechRecognition==3.14.1
 srt==3.5.3
