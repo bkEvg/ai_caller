@@ -90,7 +90,6 @@ class AudioSocketParser:
         Возвращает: (тип, длина_payload, payload)
         """
         if len(self.buffer) < 3:
-            logging.error("Длина буфера меньше 3")
             return None
 
         header = self.buffer[:3]
@@ -99,7 +98,6 @@ class AudioSocketParser:
 
         total_length = 3 + payload_length
         if len(self.buffer) < total_length:
-            logging.error("Длина буфера не соответствует заявленной")
             return None
         payload = bytes(self.buffer[3:payload_length])
         del self.buffer[:total_length]
