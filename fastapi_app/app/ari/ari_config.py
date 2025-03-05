@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 HOST = '31.129.35.221:8088'
-EXTERNAL_HOST = '217.114.3.34:7575'
+EXTERNAL_HOST = '217.114.9.31:7575'
 ARI_HOST = f"http://{HOST}/ari"
 ARI_USER = "terra-user-01"
 ARI_PASSWORD = os.environ.get('ARI_PASS')

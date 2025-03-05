@@ -118,7 +118,7 @@ class AriClient:
             "external_host": EXTERNAL_HOST,
             "encapsulation": "audiosocket",
             "transport": "tcp",
-            "format": "s16lin",
+            "format": "alaw",
             "data": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
         }
         return await self._send_request(url, 'POST', data)
@@ -181,7 +181,8 @@ class WSHandler:
 
             # Создаем передачу потока во внешний ресурс
             external_media = await self.ari_client.create_external_media()
-            # await self.ari_client.add_channel_to_bridge(
-            #     self.current_bridge_id, external_media['id'])
+            logger.error(external_media)
+            await self.ari_client.add_channel_to_bridge(
+                self.current_bridge_id, external_media['id'])
 
             await self.handle_events(websocket)

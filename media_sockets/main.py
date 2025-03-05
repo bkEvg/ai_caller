@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import socket
 import struct
 import base64
@@ -219,7 +220,7 @@ async def main():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.bind((HOST, PORT))
         sock.listen()
-        print(f"AudioSocket server listening on {HOST}:{PORT}...")
+        logging.error(f"AudioSocket server listening on {HOST}:{PORT}...")
 
         while True:
             conn, addr = sock.accept()
