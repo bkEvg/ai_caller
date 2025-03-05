@@ -36,7 +36,7 @@ class SpeechProcessor:
         if self.audio_buffer.is_ready():
             wav_audio = AudioConverter.pcm_to_wav(self.audio_buffer.buffer)
             text = self.asr.recognize(wav_audio)
-            self.audio_buffer.clear()
+            # self.audio_buffer.clear()
             logger.error(f'Распознано: {text}')
         if text:
             # Генерируем аудио через TTS
@@ -60,14 +60,14 @@ async def main():
         with conn:
             while True:
                 data = conn.recv(160)
-                # if speech_processor.locate_speech(data):
-                #     response_pcm = await speech_processor.handle_audio(data)
-                #     if response_pcm:
-                #         frame = AudioConverter.create_audio_frame(response_pcm)
-                #         conn.send(frame)
-                if data:
+                if not data:
+                    break
+                if speech_processor.locate_speech(data):
+                    response_pcm = await speech_processor.handle_audio(data)
+                    # if response_pcm:
+                    #     frame = AudioConverter.create_audio_frame(response_pcm)
+                    #     conn.send(frame)
                     conn.send(data)
-                    logger.error(f"Echoed {len(data)} bytes")
 
 
 if __name__ == "__main__":
