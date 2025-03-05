@@ -70,7 +70,7 @@ async def main():
         conn, addr = socket_stream.accept()
         with conn:
             while True:
-                data = conn.recv(160)
+                data = conn.recv(1024*1024)
 
                 # Добавляем данные в буфер
                 parser.buffer.extend(data)

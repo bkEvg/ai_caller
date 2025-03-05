@@ -90,6 +90,7 @@ class AudioSocketParser:
         Возвращает: (тип, длина_payload, payload)
         """
         if len(self.buffer) < 3:
+            logging.error("Длина буфера меньше 3")
             return None
 
         header = self.buffer[:3]
