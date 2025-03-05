@@ -77,7 +77,7 @@ async def main():
                 while True:
                     packet = parser.parse_packet()
                     if not packet:
-                        logger.error('There is not packet')
+                        logger.error('There is not enough data, wait more')
                         break  # Выходим из цикла, но не завершаем работу
                     packet_type, payload_length, payload = packet
 
