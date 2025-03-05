@@ -60,8 +60,6 @@ async def main():
         with conn:
             while True:
                 data = conn.recv(160)
-                if not data:
-                    break
                 # if speech_processor.locate_speech(data):
                 #     response_pcm = await speech_processor.handle_audio(data)
                 #     if response_pcm:
