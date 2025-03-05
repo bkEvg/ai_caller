@@ -3,6 +3,7 @@ import audioop
 import struct
 import io
 import wave
+from typing import Optional
 
 from src.constants import (FRAMES_OF_SILENCE, DEFAULT_SAMPLE_RATE,
                            DEFAULT_SAMPLE_WIDTH, SENTENCE_TIMER,
@@ -75,3 +76,28 @@ class AudioConverter:
             wav_file.writeframes(pcm_data)
         wav_buffer.seek(0)
         return wav_buffer
+
+
+class AudioSocketParser:
+
+    def __init__(self):
+        self.buffer = bytearray()
+
+    def parse_packet(self) -> Optional[tuple[int, int, bytes]]:
+        """
+        Пытаемся распарсить пакет из буфера.
+        Возвращает: (тип, длина_payload, payload)
+        """
+        if len(self.buffer) < 3:
+            return None
+
+        header = self.buffer[:3]
+        obj_type = header[0]
+        payload_length = struct.unpack('>H', header[1:3])[0]
+
+        total_length = 3 + payload_length
+        if len(self.buffer) < total_length:
+            return None
+        payload = bytes(self.buffer[3:payload_length])
+        del self.buffer[:total_length]
+        return obj_type, payload_length, payload

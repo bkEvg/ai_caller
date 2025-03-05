@@ -6,7 +6,7 @@ from typing import Optional
 from src.generators.tts import SpeechGenerator
 from src.detectors.audio_detector import VoiceDetector
 from src.detectors.speech_transcription import SpeechTranscriptor
-from src.utils import AudioBuffer, AudioConverter
+from src.utils import AudioBuffer, AudioConverter, AudioSocketParser
 
 logger = logging.getLogger(__name__)
 
@@ -55,20 +55,43 @@ async def main():
         socket_stream.bind((HOST, PORT))
         socket_stream.listen()
         speech_processor = SpeechProcessor()
+        parser = AudioSocketParser()
         logger.error("AudioSocket server started listening.")
         conn, addr = socket_stream.accept()
         with conn:
             while True:
                 data = conn.recv(160)
-                if not data:
-                    break
-                # if speech_processor.locate_speech(data):
-                #     response_pcm = await speech_processor.handle_audio(data)
-                #     # if response_pcm:
-                #     #     frame = AudioConverter.create_audio_frame(response_pcm)
-                #     #     conn.send(frame)
-                #     conn.send(data)
-                print(data)
+
+                # Добавляем данные в буфер
+                parser.buffer.extend(data)
+                while True:
+                    packet = parser.parse_packet()
+                    if not packet:
+                        return
+                    packet_type, payload_length, payload = packet
+
+                    # Обрабатываем разные типы пакетов
+                    if packet_type == 0x00:
+                        logger.error("Terminate packet received")
+                        return
+
+                    elif packet_type == 0x01:
+                        uuid = payload.hex()
+                        logger.error(f"UUID received: {uuid}")
+
+                    elif packet_type == 0x10:
+                        logger.error(f"Audio packet: {len(payload)} bytes")
+                        # Для отладки сохраняем аудио в файл
+                        with open("audio.pcm", "ab") as f:
+                            f.write(payload)
+
+                    elif packet_type == 0xFF:
+                        error_code = payload.decode("utf-8", errors="ignore")
+                        logger.error(f"Error: {error_code}")
+
+                    else:
+                        logger.error(
+                            f"Unknown packet type: 0x{packet_type:02x}")
 
 
 if __name__ == "__main__":
