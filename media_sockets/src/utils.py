@@ -4,6 +4,7 @@ import struct
 import io
 import wave
 from typing import Optional
+import logging
 
 from src.constants import (FRAMES_OF_SILENCE, DEFAULT_SAMPLE_RATE,
                            DEFAULT_SAMPLE_WIDTH, SENTENCE_TIMER,
@@ -97,6 +98,7 @@ class AudioSocketParser:
 
         total_length = 3 + payload_length
         if len(self.buffer) < total_length:
+            logging.error("Длина буфера не соответствует заявленной")
             return None
         payload = bytes(self.buffer[3:payload_length])
         del self.buffer[:total_length]
