@@ -62,11 +62,12 @@ async def main():
                 data = conn.recv(160)
                 if not data:
                     break
-                if speech_processor.locate_speech(data):
-                    response_pcm = await speech_processor.handle_audio(data)
-                    if response_pcm:
-                        frame = AudioConverter.create_audio_frame(response_pcm)
-                        conn.send(frame)
+                # if speech_processor.locate_speech(data):
+                #     response_pcm = await speech_processor.handle_audio(data)
+                #     if response_pcm:
+                #         frame = AudioConverter.create_audio_frame(response_pcm)
+                #         conn.send(frame)
+                conn.send(data)
 
 
 if __name__ == "__main__":
