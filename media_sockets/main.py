@@ -65,7 +65,8 @@ async def main():
                 #     if response_pcm:
                 #         frame = AudioConverter.create_audio_frame(response_pcm)
                 #         conn.send(frame)
-                conn.send(data)
+                if data:
+                    conn.send(data)
 
 
 if __name__ == "__main__":
