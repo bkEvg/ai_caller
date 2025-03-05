@@ -67,6 +67,7 @@ async def main():
                 #         conn.send(frame)
                 if data:
                     conn.send(data)
+                    logger.error(f"Echoed {len(data)} bytes")
 
 
 if __name__ == "__main__":
