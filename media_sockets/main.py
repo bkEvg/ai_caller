@@ -131,7 +131,7 @@ async def handle_audiosocket_connection(conn):
     # Устанавливаем WebSocket-соединение с Realtime API
     async with websockets.connect(
         REALTIME_URL,
-        extra_headers={
+        additional_headers={
             "Authorization": f"Bearer {OPENAI_API_KEY}",
             "OpenAI-Beta": "realtime=v1"
         }
