@@ -79,6 +79,6 @@ jobs:
       - name: Build and Push
         uses: docker/build-push-action@v4
         with:
-          context: ./gateway/
+          context: ./media_sockets/
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/ai_caller-audio_socket:latest
