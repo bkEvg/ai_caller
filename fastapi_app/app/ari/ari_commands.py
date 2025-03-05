@@ -118,7 +118,7 @@ class AriClient:
             "external_host": EXTERNAL_HOST,
             "encapsulation": "audiosocket",
             "transport": "tcp",
-            "format": "alaw",
+            "format": "slin",
             "data": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
         }
         return await self._send_request(url, 'POST', data)
