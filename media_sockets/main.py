@@ -44,6 +44,16 @@ class SpeechProcessor:
         return None
 
 
+def create_audio_packet(pcm_data: bytes) -> bytes:
+    """
+    Создает пакет AudioSocket для отправки аудио в Asterisk.
+    Формат: [тип][длина_payload][payload]
+    """
+    packet_type = 0x10.to_bytes(1, byteorder="big")
+    payload_length = len(pcm_data).to_bytes(2, byteorder="big")
+    return packet_type + payload_length + pcm_data
+
+
 async def main():
     """
     Main WebSocket server.
@@ -67,6 +77,7 @@ async def main():
                 while True:
                     packet = parser.parse_packet()
                     if not packet:
+                        logger.error('There is not packet')
                         return
                     packet_type, payload_length, payload = packet
 
@@ -81,9 +92,9 @@ async def main():
 
                     elif packet_type == 0x10:
                         logger.error(f"Audio packet: {len(payload)} bytes")
-                        # Для отладки сохраняем аудио в файл
-                        with open("audio.pcm", "ab") as f:
-                            f.write(payload)
+                        audio_packet = create_audio_packet(payload)
+                        conn.send(audio_packet)
+                        logger.error("Отправлен аудиопакет обратно в Asterisk")
 
                     elif packet_type == 0xFF:
                         error_code = payload.decode("utf-8", errors="ignore")
