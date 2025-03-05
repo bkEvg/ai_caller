@@ -74,6 +74,9 @@ async def main():
 
                 # Добавляем данные в буфер
                 parser.buffer.extend(data)
+                logger.error(
+                    f"Получено {len(data)} байт, размер буфера: {len(parser.buffer)} байт")
+
                 while True:
                     packet = parser.parse_packet()
                     if not packet:
