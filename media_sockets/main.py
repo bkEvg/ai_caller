@@ -98,7 +98,7 @@ async def main():
                         # with open('test.raw', 'rb') as file:
                         #     audio = file.read()
                         # audio_packet = create_audio_packet(audio)
-                        # conn.send(audio_packet)
+                        conn.send(data)
                         # with open('audio.raw', 'ab') as file:
                         #     file.write(payload)
                         # logger.error("Пакет отправлен обратно")
