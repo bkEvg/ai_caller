@@ -70,12 +70,13 @@ async def main():
         conn, addr = socket_stream.accept()
         with conn:
             while True:
-                data = conn.recv(160)
+                data = conn.recv(1024*1024)
 
                 # Добавляем данные в буфер
                 parser.buffer.extend(data)
                 # logger.error(
-                #     f"Получено {len(data)} байт, размер буфера: {len(parser.buffer)} байт")
+                #     f"Получено {len(data)} байт, размер буфера:"
+                #     f"{len(parser.buffer)} байт")
 
                 while True:
                     packet = parser.parse_packet()
@@ -94,13 +95,13 @@ async def main():
 
                     elif packet_type == 0x10:
                         logger.error(f"Audio packet: {len(payload)} bytes")
-                        with open('test.raw', 'rb') as file:
-                            audio = file.read()
-                        audio_packet = create_audio_packet(audio)
-                        conn.send(audio_packet)
+                        # with open('test.raw', 'rb') as file:
+                        #     audio = file.read()
+                        # audio_packet = create_audio_packet(audio)
+                        # conn.send(audio_packet)
                         # with open('audio.raw', 'ab') as file:
                         #     file.write(payload)
-                        logger.error("Пакет отправлен обратно")
+                        # logger.error("Пакет отправлен обратно")
 
                     elif packet_type == 0xFF:
                         error_code = payload.decode("utf-8", errors="ignore")
