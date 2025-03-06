@@ -98,6 +98,8 @@ async def main():
                         # with open('test.raw', 'rb') as file:
                         #     audio = file.read()
                         # audio_packet = create_audio_packet(audio)
+                        pcm_audio = AudioConverter.alaw_to_pcm(payload)
+                        audio_packet = create_audio_packet(pcm_audio)
                         conn.send(data)
                         # with open('audio.raw', 'ab') as file:
                         #     file.write(payload)
