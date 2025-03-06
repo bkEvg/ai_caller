@@ -80,7 +80,7 @@ async def main():
                 while True:
                     packet = parser.parse_packet()
                     if not packet:
-                        break  # Выходим из цикла, но не завершаем работу
+                        break
                     packet_type, payload_length, payload = packet
 
                     # Обрабатываем разные типы пакетов
