@@ -95,10 +95,10 @@ async def main():
                     elif packet_type == 0x10:
                         logger.error(f"Audio packet: {len(payload)} bytes")
                         # audio_packet = create_audio_packet(payload)
-                        # conn.send(data)
-                        with open('audio.raw', 'ab') as file:
-                            file.write(payload)
-                        logger.error("Пакет записан")
+                        conn.send(data)
+                        # with open('audio.raw', 'ab') as file:
+                        #     file.write(payload)
+                        logger.error("Пакет отправлен обратно")
 
                     elif packet_type == 0xFF:
                         error_code = payload.decode("utf-8", errors="ignore")
