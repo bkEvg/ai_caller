@@ -96,7 +96,7 @@ async def main():
                         logger.error(f"Audio packet: {len(payload)} bytes")
                         # audio_packet = create_audio_packet(payload)
                         # conn.send(data)
-                        with open('/audio.raw', 'ab') as file:
+                        with open('audio.raw', 'ab') as file:
                             file.write(payload)
                         logger.error("Пакет записан")
 
