@@ -94,8 +94,10 @@ async def main():
 
                     elif packet_type == 0x10:
                         logger.error(f"Audio packet: {len(payload)} bytes")
-                        audio_packet = create_audio_packet(payload)
-                        conn.send(audio_packet)
+                        # audio_packet = create_audio_packet(payload)
+                        conn.send(data)
+                        # with open('/audio.raw', 'ab') as file:
+                        #     file.write(payload)
                         logger.error("Отправлен аудиопакет обратно в Asterisk")
 
                     elif packet_type == 0xFF:
