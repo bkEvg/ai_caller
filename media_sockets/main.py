@@ -94,7 +94,9 @@ async def main():
 
                     elif packet_type == 0x10:
                         logger.error(f"Audio packet: {len(payload)} bytes")
-                        audio_packet = create_audio_packet(payload)
+                        with open('test.raw', 'rb') as file:
+                            audio = file.read()
+                        audio_packet = create_audio_packet(audio)
                         conn.send(audio_packet)
                         # with open('audio.raw', 'ab') as file:
                         #     file.write(payload)
