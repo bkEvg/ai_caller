@@ -74,8 +74,8 @@ async def main():
 
                 # Добавляем данные в буфер
                 parser.buffer.extend(data)
-                logger.error(
-                    f"Получено {len(data)} байт, размер буфера: {len(parser.buffer)} байт")
+                # logger.error(
+                #     f"Получено {len(data)} байт, размер буфера: {len(parser.buffer)} байт")
 
                 while True:
                     packet = parser.parse_packet()
@@ -94,8 +94,8 @@ async def main():
 
                     elif packet_type == 0x10:
                         logger.error(f"Audio packet: {len(payload)} bytes")
-                        # audio_packet = create_audio_packet(payload)
-                        conn.send(data)
+                        audio_packet = create_audio_packet(payload)
+                        conn.send(audio_packet)
                         # with open('audio.raw', 'ab') as file:
                         #     file.write(payload)
                         logger.error("Пакет отправлен обратно")
