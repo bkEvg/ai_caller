@@ -103,6 +103,7 @@ async def realtime_listener(websocket, conn):
 
         # Модель присылает аудио частями через response.audio.delta
         if event_type == "response.audio.delta":
+            logger.error('Подготавливаем ответ')
             audio_b64 = event.get("delta", "")
             if audio_b64:
                 pcm16k = base64.b64decode(audio_b64)
@@ -113,15 +114,16 @@ async def realtime_listener(websocket, conn):
         elif event_type == "response.text.delta":
             # Если нужен текст - обрабатываем.
             text_chunk = event.get("delta", "")
-            print("Text chunk from model:", text_chunk)
+            logger.error("Text chunk from model:", text_chunk)
 
         elif event_type == "response.done":
-            print("Response finished:", event)
+            logger.error("Response finished:", event)
 
         else:
             # Для отладки
-            print("Other event:", event)
+            logger.error("Other event:", event)
             pass
+
 
 async def handle_audiosocket_connection(conn):
     """
@@ -201,6 +203,7 @@ async def handle_audiosocket_connection(conn):
                     logger.error(f"UUID получен: {uuid}")
 
                 elif packet_type == 0x10:
+                    logger.error('Audio пакет отправлен в gpt')
                     pcm8k = AudioConverter.alaw_to_pcm(payload)
 
                     # Пересэмплируем 8 kHz -> 16 kHz, кодируем в base64
