@@ -155,11 +155,11 @@ class WSHandler:
             logger.error(message)
             if event['type'] == 'StasisStart':
                 channel_id = event['channel']['id']
+                # await asyncio.sleep(10)
                 await self.ari_client.dial_channel(channel_id)
 
             if event['type'] == 'Dial' and event['dialstatus'] == 'ANSWER':
-                # await self.ari_client.play_audio(self.client_channel_id)
-                pass
+                await self.ari_client.play_audio(self.client_channel_id)
 
     async def connect(self):
         """Подключаемся по WebSocket и обрабатываем события."""

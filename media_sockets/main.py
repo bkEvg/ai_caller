@@ -181,14 +181,12 @@ async def handle_audiosocket_connection(conn):
                         f"Непонятный тип пакета: 0x{packet_type:02x}")
 
         except Exception as e:
-            print("AudioSocket connection error:", e)
+            logger.error("AudioSocket connection error:", e)
         finally:
-            print("Closing Realtime listener task...")
+            logger.error("Closing Realtime listener task...")
             listener_task.cancel()
-            # При желании можно отправить "input_audio_buffer.commit" или "session.end"
-            # но при разрыве всё равно сессия закроется.
 
-        print("AudioSocket connection closed.")
+        logger.error("AudioSocket connection closed.")
 
 
 async def main():
