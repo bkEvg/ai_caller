@@ -1,58 +1,18 @@
 import asyncio
 import base64
 import logging
-
 import numpy as np
 import os
 import socket
 import struct
 from scipy.signal import resample_poly
 import json
-from pydub import AudioSegment
 import websockets
 
 from src.utils import AudioSocketParser, AudioConverter
+from src.constants import OPENAI_API_KEY, REALTIME_URL
 
 logger = logging.getLogger(__name__)
-
-
-def create_audio_packet(pcm_data: bytes) -> bytes:
-    """
-    Создает пакет AudioSocket для отправки аудио в Asterisk.
-    Формат: [тип][длина_payload][payload]
-    """
-    packet_type = 0x10.to_bytes(1, byteorder="big")
-    payload_length = len(pcm_data).to_bytes(2, byteorder="big")
-    return packet_type + payload_length + pcm_data
-
-
-def parse_audio_frame(frame: bytes) -> bytes:
-    """
-    Если нужно распарсить пришедший фрейм AudioSocket (type=0x10),
-    возвращаем только полезную нагрузку PCM.
-    Для упрощения здесь предполагается, что frame уже
-    отделён от заголовков, либо мы знаем точно что это аудио.
-    """
-    # Если приходят "сырые" 160 байт, вероятно это уже "данные без заголовка",
-    # но строго по протоколу нужно читать 3-байтовый заголовок type+length
-    # и потом - payload. Ниже - для иллюстрации, как это делать.
-
-    # frame[0] = 0x10
-    # length = frame[1:3] (big-endian)
-    # payload = frame[3:]
-    # но иногда в Asterisk-примерах просто 160 байт ровно - уже PCM.
-    # Проверяйте, как реально отправляет ваша система!
-
-    if len(frame) < 3:
-        return b""
-    # Распакуем заголовок
-    t, length = struct.unpack('!BH', frame[:3])
-    if t != 0x10:
-        return b""
-    payload = frame[3:]
-    if len(payload) != length:
-        return b""
-    return payload
 
 
 def upsample_8k_to_16k(pcm8k: bytes) -> bytes:
@@ -80,16 +40,6 @@ def downsample_16k_to_8k(pcm16k: bytes) -> bytes:
     downsampled_int16 = downsampled.astype(np.int16)
     return downsampled_int16.tobytes()
 
-# Для примера объединим код сервера AudioSocket и WebSocket клиент к Realtime API
-# в одной асинхронной функции main().
-# В реальном коде, возможно, лучше держать их в разных задачах/потоках.
-
-
-REALTIME_MODEL = "gpt-4o-mini-realtime-preview-2024-12-17"
-REALTIME_URL = f"wss://api.openai.com/v1/realtime?model={REALTIME_MODEL}"
-
-OPENAI_API_KEY = os.environ.get('OPENAI_KEY')
-
 
 async def realtime_listener(websocket, conn):
     """
@@ -109,7 +59,7 @@ async def realtime_listener(websocket, conn):
             if audio_b64:
                 pcm16k = base64.b64decode(audio_b64)
                 pcm8k = downsample_16k_to_8k(pcm16k)
-                frame = create_audio_packet(pcm8k)
+                frame = AudioConverter.create_audio_packet(pcm8k)
                 conn.send(frame)
 
         elif event_type == "response.text.delta":
@@ -206,15 +156,11 @@ async def handle_audiosocket_connection(conn):
                 elif packet_type == 0x10:
                     pcm8k = AudioConverter.alaw_to_pcm(payload)
 
-                    audio = AudioSegment.from_raw(pcm8k)
-                    audio_16k = audio.set_frame_rate(16000).raw_data
-
                     # Пересэмплируем 8 kHz -> 16 kHz, кодируем в base64
                     pcm16k = upsample_8k_to_16k(pcm8k)
-                    b64_chunk = base64.b64encode(audio_16k).decode('utf-8')
+                    b64_chunk = base64.b64encode(pcm16k).decode('utf-8')
 
                     # Отправляем в Realtime API
-                    # (модель автоматически отслеживает паузы по VAD)
                     event_append = {
                         "type": "input_audio_buffer.append",
                         "audio": b64_chunk

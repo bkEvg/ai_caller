@@ -47,6 +47,16 @@ class AudioConverter:
         """Конвертация A-law в 16-bit PCM"""
         return audioop.alaw2lin(alaw_data, DEFAULT_SAMPLE_WIDTH)
 
+    @staticmethod
+    def create_audio_packet(pcm_data: bytes) -> bytes:
+        """
+        Создает пакет AudioSocket для отправки аудио в Asterisk.
+        Формат: [тип][длина_payload][payload]
+        """
+        packet_type = 0x10.to_bytes(1, byteorder="big")
+        payload_length = len(pcm_data).to_bytes(2, byteorder="big")
+        return packet_type + payload_length + pcm_data
+
 
 class AudioSocketParser:
 
