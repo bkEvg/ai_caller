@@ -48,7 +48,12 @@ async def realtime_listener(websocket, conn):
     """
     while True:
         # Ждём следующего server->client сообщения от Realtime API
-        msg = await websocket.recv()
+
+        try:
+            msg = await websocket.recv()
+        except websockets.exceptions.ConnectionClosed:
+            logger.error("WebSocket connection closed.")
+            return  # Выходим из цикла
         event = json.loads(msg)
         event_type = event.get("type", "")
         logger.error('Ждём следующего server->client сообщения от Realtime API')
