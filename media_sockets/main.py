@@ -51,35 +51,36 @@ async def realtime_listener(websocket, conn):
 
         try:
             msg = await websocket.recv()
-        except websockets.exceptions.ConnectionClosed:
-            logger.error("WebSocket connection closed.")
+
+            event = json.loads(msg)
+            event_type = event.get("type", "")
+            logger.error('Ждём следующего server->client сообщения от Realtime API')
+
+            # Модель присылает аудио частями через response.audio.delta
+            if event_type == "response.audio.delta":
+                logger.error('Подготавливаем ответ')
+                audio_b64 = event.get("delta", "")
+                if audio_b64:
+                    pcm16k = base64.b64decode(audio_b64)
+                    pcm8k = downsample_16k_to_8k(pcm16k)
+                    frame = AudioConverter.create_audio_packet(pcm8k)
+                    conn.send(frame)
+
+            elif event_type == "response.text.delta":
+                # Если нужен текст - обрабатываем.
+                text_chunk = event.get("delta", "")
+                logger.error("Text chunk from model:", text_chunk)
+
+            elif event_type == "response.done":
+                logger.error("Response finished:", event)
+
+            else:
+                # Для отладки
+                logger.error("Other event:", event)
+                pass
+        except Exception as exc:
+            logger.error(f"WebSocket connection closed {exc}")
             return  # Выходим из цикла
-        event = json.loads(msg)
-        event_type = event.get("type", "")
-        logger.error('Ждём следующего server->client сообщения от Realtime API')
-
-        # Модель присылает аудио частями через response.audio.delta
-        if event_type == "response.audio.delta":
-            logger.error('Подготавливаем ответ')
-            audio_b64 = event.get("delta", "")
-            if audio_b64:
-                pcm16k = base64.b64decode(audio_b64)
-                pcm8k = downsample_16k_to_8k(pcm16k)
-                frame = AudioConverter.create_audio_packet(pcm8k)
-                conn.send(frame)
-
-        elif event_type == "response.text.delta":
-            # Если нужен текст - обрабатываем.
-            text_chunk = event.get("delta", "")
-            logger.error("Text chunk from model:", text_chunk)
-
-        elif event_type == "response.done":
-            logger.error("Response finished:", event)
-
-        else:
-            # Для отладки
-            logger.error("Other event:", event)
-            pass
 
 
 async def handle_audiosocket_connection(conn):
