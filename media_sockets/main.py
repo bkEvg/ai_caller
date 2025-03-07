@@ -203,14 +203,15 @@ async def handle_audiosocket_connection(conn):
                     logger.error(f"UUID получен: {uuid}")
 
                 elif packet_type == 0x10:
-                    logger.error('Audio пакет отправлен в gpt')
+                    logger.error(f'Audio пакет отправлен в gpt {len(payload)}')
                     pcm8k = AudioConverter.alaw_to_pcm(payload)
+                    conn.send(create_audio_packet(pcm8k))
 
                     # Пересэмплируем 8 kHz -> 16 kHz, кодируем в base64
                     pcm16k = upsample_8k_to_16k(pcm8k)
                     b64_chunk = base64.b64encode(pcm16k).decode('utf-8')
 
-                    # Отправляем в Realtime API 
+                    # Отправляем в Realtime API
                     # (модель автоматически отслеживает паузы по VAD)
                     event_append = {
                         "type": "input_audio_buffer.append",
