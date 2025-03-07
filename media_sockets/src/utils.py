@@ -47,37 +47,6 @@ class AudioConverter:
         """Конвертация A-law в 16-bit PCM"""
         return audioop.alaw2lin(alaw_data, DEFAULT_SAMPLE_WIDTH)
 
-    @staticmethod
-    def pcm_to_alaw(pcm_data):
-        """Конвертация PCM в A-law."""
-        return audioop.lin2alaw(pcm_data, DEFAULT_SAMPLE_WIDTH)
-
-    @staticmethod
-    def create_audio_frame(pcm_data: bytes) -> bytes:
-        """
-        Создает фрейм для AudioSocket:
-        - Тип: 0x10 (аудио, 16-bit PCM, 8 kHz, mono)
-        - Длина данных: 2 байта (big-endian)
-        - Данные: PCM-аудио
-        """
-        header_type = 0x10
-        # Big-Endian
-        header = struct.pack('!BH', header_type, len(pcm_data))
-        return header + pcm_data
-
-    @staticmethod
-    def pcm_to_wav(pcm_data, sample_rate=DEFAULT_SAMPLE_RATE,
-                   channels=1, sampwidth=DEFAULT_SAMPLE_WIDTH):
-        """Конвертация raw PCM в WAV (используется для распознавания)"""
-        wav_buffer = io.BytesIO()
-        with wave.open(wav_buffer, "wb") as wav_file:
-            wav_file.setnchannels(channels)
-            wav_file.setsampwidth(sampwidth)
-            wav_file.setframerate(sample_rate)
-            wav_file.writeframes(pcm_data)
-        wav_buffer.seek(0)
-        return wav_buffer
-
 
 class AudioSocketParser:
 

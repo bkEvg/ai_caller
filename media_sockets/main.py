@@ -8,6 +8,7 @@ import socket
 import struct
 from scipy.signal import resample_poly
 import json
+from pydub import AudioSegment
 import websockets
 
 from src.utils import AudioSocketParser, AudioConverter
@@ -203,12 +204,14 @@ async def handle_audiosocket_connection(conn):
                     logger.error(f"UUID получен: {uuid}")
 
                 elif packet_type == 0x10:
-                    logger.error(f'Audio пакет отправлен в gpt {len(payload)}')
                     pcm8k = AudioConverter.alaw_to_pcm(payload)
+
+                    audio = AudioSegment.from_raw(pcm8k)
+                    audio_16k = audio.set_frame_rate(16000).raw_data
 
                     # Пересэмплируем 8 kHz -> 16 kHz, кодируем в base64
                     pcm16k = upsample_8k_to_16k(pcm8k)
-                    b64_chunk = base64.b64encode(pcm8k).decode('utf-8')
+                    b64_chunk = base64.b64encode(audio_16k).decode('utf-8')
 
                     # Отправляем в Realtime API
                     # (модель автоматически отслеживает паузы по VAD)
