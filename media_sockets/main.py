@@ -51,6 +51,7 @@ async def realtime_listener(websocket, conn):
         msg = await websocket.recv()
         event = json.loads(msg)
         event_type = event.get("type", "")
+        logger.error('Ждём следующего server->client сообщения от Realtime API')
 
         # Модель присылает аудио частями через response.audio.delta
         if event_type == "response.audio.delta":
