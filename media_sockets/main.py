@@ -172,7 +172,6 @@ async def handle_audiosocket_connection(reader, writer):
                 logger.info(f"UUID получен: {uuid}")
 
             elif packet_type == 0x10:
-                logger.info(f"Аудио получено")
                 pcm8k = AudioConverter.alaw_to_pcm(payload)
 
                 # Пересэмплируем 8 kHz -> 16 kHz, кодируем в base64
