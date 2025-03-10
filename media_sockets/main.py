@@ -46,12 +46,11 @@ async def realtime_listener(websocket, conn):
     Задача, которая получает события от Realtime API
     и отправляет аудио обратно в телефонию.
     """
-    while True:
-        # Ждём следующего server->client сообщения от Realtime API
+    try:
+        while True:
+            # Ждём следующего server->client сообщения от Realtime API
 
-        try:
             msg = await websocket.recv()
-
             event = json.loads(msg)
             event_type = event.get("type", "")
             logger.error('Ждём следующего server->client сообщения от Realtime API')
@@ -78,9 +77,8 @@ async def realtime_listener(websocket, conn):
                 # Для отладки
                 logger.error("Other event:", event)
                 pass
-        except Exception as exc:
-            logger.error(f"WebSocket connection closed {exc}")
-            return  # Выходим из цикла
+    except Exception as exc:
+        raise Exception(f'Realtime listener exception: {exc}')
 
 
 async def handle_audiosocket_connection(conn):
