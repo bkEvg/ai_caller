@@ -67,12 +67,17 @@ async def realtime_listener(websocket, writer):
             if audio_b64:
                 pcm16k = base64.b64decode(audio_b64)
                 pcm8k = downsample_16k_to_8k(pcm16k)
-                frame = AudioConverter.create_audio_packet(pcm8k)
-                writer.write(frame)
-                if writer.is_closing():
-                    logger.warning("Writer закрывается, прерываем отправку")
-                    return
-                await writer.drain()
+                # frame = AudioConverter.create_audio_packet(pcm8k)
+                # writer.write(frame)
+                # if writer.is_closing():
+                #     logger.warning("Writer закрывается, прерываем отправку")
+                #     return
+                # await writer.drain()
+                chunk_size = 1024
+                for i in range(0, len(pcm8k), chunk_size):
+                    writer.write(AudioConverter.create_audio_packet(pcm8k[
+                                                                    i:i + chunk_size]))
+                    await writer.drain()
 
         elif event_type == "response.text.delta":
             # Если нужен текст - обрабатываем.
