@@ -48,7 +48,7 @@ def downsample_16k_to_8k(pcm16k: bytes) -> bytes:
     return downsampled_int16.tobytes()
 
 
-async def realtime_listener(websocket, conn):
+async def realtime_listener(websocket, writer):
     """
     Задача, которая получает события от Realtime API
     и отправляет аудио обратно в телефонию.
@@ -68,7 +68,8 @@ async def realtime_listener(websocket, conn):
                 pcm16k = base64.b64decode(audio_b64)
                 pcm8k = downsample_16k_to_8k(pcm16k)
                 frame = AudioConverter.create_audio_packet(pcm8k)
-                conn.send(frame)
+                writer.write(frame)
+                await writer.drain()
 
         elif event_type == "response.text.delta":
             # Если нужен текст - обрабатываем.
@@ -84,7 +85,7 @@ async def realtime_listener(websocket, conn):
             pass
 
 
-async def handle_audiosocket_connection(conn):
+async def handle_audiosocket_connection(reader, writer):
     """
     Обработка одного входящего TCP-соединения AudioSocket.
     Здесь читаем входящие 8k-пакеты и отправляем их в Realtime API.
@@ -141,11 +142,11 @@ async def handle_audiosocket_connection(conn):
 
         # Запустим фоновую задачу, которая читает ответы от модели
         # и пересылает их в телефонию
-        listener_task = asyncio.create_task(realtime_listener(ws, conn))
+        listener_task = asyncio.create_task(realtime_listener(ws, writer))
         parser = AudioSocketParser()
         try:
             while True:
-                data = conn.recv(2048)
+                data = await reader.read(2048)
                 parser.buffer.extend(data)
 
                 if not data:
@@ -187,6 +188,8 @@ async def handle_audiosocket_connection(conn):
         finally:
             logger.info("Closing Realtime listener task...")
             listener_task.cancel()
+            writer.close()
+            await writer.wait_closed()
 
         logger.info("AudioSocket connection closed.")
 
@@ -195,16 +198,12 @@ async def main():
     HOST = '0.0.0.0'
     PORT = 7575
 
-    # Запускаем TCP-сервер
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-        sock.bind((HOST, PORT))
-        sock.listen()
-
-        while True:
-            conn, addr = sock.accept()
-            # Передадим управление асинхронной handle-функции:
-            await handle_audiosocket_connection(conn)
-            conn.close()
+    server = await asyncio.start_server(
+        handle_audiosocket_connection, HOST, PORT)
+    addrs = ', '.join(str(sock.getsockname()) for sock in server.sockets)
+    logger.info(f'Serving on {addrs}')
+    async with server:
+        await server.serve_forever()
 
 if __name__ == "__main__":
     asyncio.run(main())
