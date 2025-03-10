@@ -154,7 +154,7 @@ async def handle_audiosocket_connection(reader, writer):
         parser = AudioSocketParser()
         # try:
         while True:
-            data = await reader.read(2048)
+            data = await reader.read(1024)
             parser.buffer.extend(data)
 
             if not data:
