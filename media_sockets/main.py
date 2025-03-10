@@ -69,6 +69,9 @@ async def realtime_listener(websocket, writer):
                 pcm8k = downsample_16k_to_8k(pcm16k)
                 frame = AudioConverter.create_audio_packet(pcm8k)
                 writer.write(frame)
+                if writer.is_closing():
+                    logger.warning("Writer закрывается, прерываем отправку")
+                    return
                 await writer.drain()
 
         elif event_type == "response.text.delta":
