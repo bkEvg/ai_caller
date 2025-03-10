@@ -81,7 +81,7 @@ async def realtime_listener(websocket, writer):
 
         else:
             # Для отладки
-            logger.info("Other event:", event)
+            # logger.info("Other event:", event)
             pass
 
 
@@ -177,6 +177,7 @@ async def handle_audiosocket_connection(reader, writer):
                         "audio": b64_chunk
                     }
                     await ws.send(json.dumps(event_append))
+
                 elif packet_type == 0xFF:
                     error_code = payload.decode("utf-8", errors="ignore")
                     logger.error(f"Error: {error_code}")
@@ -185,13 +186,13 @@ async def handle_audiosocket_connection(reader, writer):
                     logger.info(
                         f"Непонятный тип пакета: 0x{packet_type:02x}")
 
-        except Exception as e:
-            logger.info("AudioSocket connection error:", e)
-        finally:
-            logger.info("Closing Realtime listener task...")
-            listener_task.cancel()
-            writer.close()
-            await writer.wait_closed()
+        # except Exception as e:
+        #     logger.info("AudioSocket connection error:", e)
+        # finally:
+        #     logger.info("Closing Realtime listener task...")
+        #     listener_task.cancel()
+        #     writer.close()
+        #     await writer.wait_closed()
 
         logger.info("AudioSocket connection closed.")
 
