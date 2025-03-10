@@ -53,39 +53,38 @@ async def realtime_listener(websocket, conn):
     Задача, которая получает события от Realtime API
     и отправляет аудио обратно в телефонию.
     """
-    try:
-        while True:
-            # Ждём следующего server->client сообщения от Realtime API
+    while True:
+        # Ждём следующего server->client сообщения от Realtime API
 
-            msg = await websocket.recv()
-            event = json.loads(msg)
-            event_type = event.get("type", "")
-            logger.info('Ждём следующего server->client сообщения от Realtime API')
+        logger.info("Перед websocket.recv()...")
+        msg = await websocket.recv()
+        event = json.loads(msg)
+        event_type = event.get("type", "")
+        logger.info(f"Получено сообщение от WebSocket {event_type} ")
+        logger.info('Ждём следующего server->client сообщения от Realtime API')
 
-            # Модель присылает аудио частями через response.audio.delta
-            if event_type == "response.audio.delta":
-                logger.info('Подготавливаем ответ')
-                audio_b64 = event.get("delta", "")
-                if audio_b64:
-                    pcm16k = base64.b64decode(audio_b64)
-                    pcm8k = downsample_16k_to_8k(pcm16k)
-                    frame = AudioConverter.create_audio_packet(pcm8k)
-                    conn.send(frame)
+        # Модель присылает аудио частями через response.audio.delta
+        if event_type == "response.audio.delta":
+            logger.info('Подготавливаем ответ')
+            audio_b64 = event.get("delta", "")
+            if audio_b64:
+                pcm16k = base64.b64decode(audio_b64)
+                pcm8k = downsample_16k_to_8k(pcm16k)
+                frame = AudioConverter.create_audio_packet(pcm8k)
+                conn.send(frame)
 
-            elif event_type == "response.text.delta":
-                # Если нужен текст - обрабатываем.
-                text_chunk = event.get("delta", "")
-                logger.info("Text chunk from model:", text_chunk)
+        elif event_type == "response.text.delta":
+            # Если нужен текст - обрабатываем.
+            text_chunk = event.get("delta", "")
+            logger.info("Text chunk from model:", text_chunk)
 
-            elif event_type == "response.done":
-                logger.info("Response finished:", event)
+        elif event_type == "response.done":
+            logger.info("Response finished:", event)
 
-            else:
-                # Для отладки
-                logger.info("Other event:", event)
-                pass
-    except Exception as exc:
-        raise Exception(f'Realtime listener exception: {exc}')
+        else:
+            # Для отладки
+            logger.info("Other event:", event)
+            pass
 
 
 async def handle_audiosocket_connection(conn):
@@ -177,7 +176,6 @@ async def handle_audiosocket_connection(conn):
                         "type": "input_audio_buffer.append",
                         "audio": b64_chunk
                     }
-                    logger.debug('Отправляю голос в gpt.')
                     await ws.send(json.dumps(event_append))
                 elif packet_type == 0xFF:
                     error_code = payload.decode("utf-8", errors="ignore")
