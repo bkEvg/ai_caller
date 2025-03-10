@@ -13,7 +13,7 @@ from src.utils import AudioSocketParser, AudioConverter
 from src.constants import OPENAI_API_KEY, REALTIME_URL
 
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format=("%(asctime)s [%(levelname)s] %(funcName)s"
             " at - %(lineno)d line: %(message)s"),
     handlers=[logging.StreamHandler()]
@@ -151,18 +151,20 @@ async def handle_audiosocket_connection(reader, writer):
 
                 if not data:
                     break
-                await asyncio.sleep(0.1)  # Даем другим задачам поработать
+
                 packet_type, packet_length, payload = parser.parse_packet()
+
                 # Обрабатываем разные типы пакетов
                 if packet_type == 0x00:
-                    logger.debug("Пакет закрытия соединения")
+                    logger.info("Пакет закрытия соединения")
                     return
 
                 elif packet_type == 0x01:
                     uuid = payload.hex()
-                    logger.debug(f"UUID получен: {uuid}")
+                    logger.info(f"UUID получен: {uuid}")
 
                 elif packet_type == 0x10:
+                    logger.info(f"Аудио получено")
                     pcm8k = AudioConverter.alaw_to_pcm(payload)
 
                     # Пересэмплируем 8 kHz -> 16 kHz, кодируем в base64
