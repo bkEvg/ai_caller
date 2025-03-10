@@ -153,7 +153,7 @@ async def handle_audiosocket_connection(conn):
 
                 if not data:
                     break
-                await asyncio.sleep(0.1)  # Даем другим задачам поработать
+                await asyncio.sleep(0.2)  # Даем другим задачам поработать
                 packet_type, packet_length, payload = parser.parse_packet()
                 # Обрабатываем разные типы пакетов
                 if packet_type == 0x00:
