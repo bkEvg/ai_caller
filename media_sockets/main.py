@@ -142,7 +142,7 @@ async def handle_audiosocket_connection(reader, writer):
                     "prefix_padding_ms": 300,
                     "create_response": True,
                     # прерывать, если пользователь заговорил
-                    "interrupt_response": True
+                    "interrupt_response": False
                 },
                 "temperature": 0.7
             }
