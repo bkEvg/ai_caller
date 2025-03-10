@@ -177,7 +177,6 @@ async def handle_audiosocket_connection(reader, writer):
                         "audio": b64_chunk
                     }
                     await ws.send(json.dumps(event_append))
-                    await ws.send(json.dumps({"type": "input_audio_buffer.end"}))
                 elif packet_type == 0xFF:
                     error_code = payload.decode("utf-8", errors="ignore")
                     logger.error(f"Error: {error_code}")
