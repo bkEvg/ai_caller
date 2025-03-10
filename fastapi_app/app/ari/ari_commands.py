@@ -152,7 +152,7 @@ class WSHandler:
         while True:
             message = await websocket.recv()
             event = json.loads(message)
-            logger.error(message)
+            logger.info(message)
             if event['type'] == 'StasisStart':
                 channel_id = event['channel']['id']
                 # await asyncio.sleep(10)
@@ -165,16 +165,16 @@ class WSHandler:
         """Подключаемся по WebSocket и обрабатываем события."""
         async with websockets.connect(
                 self.ws_host, additional_headers=self.headers) as websocket:
-            logger.error('Connected to ARI with app %s', STASIS_APP_NAME)
+            logger.info('Connected to ARI with app %s', STASIS_APP_NAME)
 
             self.current_bridge_id = await self.ari_client.create_bridge()
 
-            logger.error(f'BRIDGE: {self.current_bridge_id}')
+            logger.info(f'BRIDGE: {self.current_bridge_id}')
 
             # Создаем канал для вызова
             client = await self.ari_client.create_channel(self.sip_endpoint)
             self.client_channel_id = client['id']
-            logger.error(f'CLIENT_CHANNEL_ID: {self.client_channel_id}')
+            logger.info(f'CLIENT_CHANNEL_ID: {self.client_channel_id}')
 
             await self.ari_client.add_channel_to_bridge(
                 self.current_bridge_id, self.client_channel_id)

@@ -37,7 +37,7 @@ class SpeechProcessor:
             wav_audio = AudioConverter.pcm_to_wav(self.audio_buffer.buffer)
             text = self.asr.recognize(wav_audio)
             # self.audio_buffer.clear()
-            logger.error(f'Распознано: {text}')
+            logger.info(f'Распознано: {text}')
         if text:
             # Генерируем аудио через TTS
             return self.speech_generator.generate(text)
@@ -66,7 +66,7 @@ async def main():
         socket_stream.listen()
         speech_processor = SpeechProcessor()
         parser = AudioSocketParser()
-        logger.error("AudioSocket server started listening.")
+        logger.info("AudioSocket server started listening.")
         conn, addr = socket_stream.accept()
         with conn:
             while True:
@@ -74,7 +74,7 @@ async def main():
 
                 # Добавляем данные в буфер
                 parser.buffer.extend(data)
-                # logger.error(
+                # logger.info(
                 #     f"Получено {len(data)} байт, размер буфера:"
                 #     f"{len(parser.buffer)} байт")
 
@@ -86,25 +86,25 @@ async def main():
 
                     # Обрабатываем разные типы пакетов
                     if packet_type == 0x00:
-                        logger.error("Terminate packet received")
+                        logger.info("Terminate packet received")
                         return
 
                     elif packet_type == 0x01:
                         uuid = payload.hex()
-                        logger.error(f"UUID received: {uuid}")
+                        logger.info(f"UUID received: {uuid}")
 
                     elif packet_type == 0x10:
-                        logger.error(f"Audio packet: {len(payload)} bytes")
+                        logger.info(f"Audio packet: {len(payload)} bytes")
                         pcm_audio = AudioConverter.alaw_to_pcm(payload)
                         audio_packet = create_audio_packet(pcm_audio)
                         conn.send(audio_packet)
 
                     elif packet_type == 0xFF:
                         error_code = payload.decode("utf-8", errors="ignore")
-                        logger.error(f"Error: {error_code}")
+                        logger.info(f"Error: {error_code}")
 
                     else:
-                        logger.error(
+                        logger.info(
                             f"Unknown packet type: 0x{packet_type:02x}")
 
 

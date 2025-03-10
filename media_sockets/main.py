@@ -12,6 +12,13 @@ import websockets
 from src.utils import AudioSocketParser, AudioConverter
 from src.constants import OPENAI_API_KEY, REALTIME_URL
 
+logging.basicConfig(
+    level=logging.INFO,
+    format=("%(asctime)s [%(levelname)s] %(funcName)s"
+            " at - %(lineno)d line: %(message)s"),
+    handlers=[logging.StreamHandler()]
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -53,11 +60,11 @@ async def realtime_listener(websocket, conn):
             msg = await websocket.recv()
             event = json.loads(msg)
             event_type = event.get("type", "")
-            logger.error('Ждём следующего server->client сообщения от Realtime API')
+            logger.info('Ждём следующего server->client сообщения от Realtime API')
 
             # Модель присылает аудио частями через response.audio.delta
             if event_type == "response.audio.delta":
-                logger.error('Подготавливаем ответ')
+                logger.info('Подготавливаем ответ')
                 audio_b64 = event.get("delta", "")
                 if audio_b64:
                     pcm16k = base64.b64decode(audio_b64)
@@ -68,14 +75,14 @@ async def realtime_listener(websocket, conn):
             elif event_type == "response.text.delta":
                 # Если нужен текст - обрабатываем.
                 text_chunk = event.get("delta", "")
-                logger.error("Text chunk from model:", text_chunk)
+                logger.info("Text chunk from model:", text_chunk)
 
             elif event_type == "response.done":
-                logger.error("Response finished:", event)
+                logger.info("Response finished:", event)
 
             else:
                 # Для отладки
-                logger.error("Other event:", event)
+                logger.info("Other event:", event)
                 pass
     except Exception as exc:
         raise Exception(f'Realtime listener exception: {exc}')
@@ -95,7 +102,7 @@ async def handle_audiosocket_connection(conn):
             "OpenAI-Beta": "realtime=v1"
         }
     ) as ws:
-        print("Connected to Realtime API.")
+        logger.info("Connected to Realtime API.")
 
         # Настраиваем сессию: audio input/output, PCM16
         session_update = {
@@ -151,12 +158,12 @@ async def handle_audiosocket_connection(conn):
                 packet_type, packet_length, payload = parser.parse_packet()
                 # Обрабатываем разные типы пакетов
                 if packet_type == 0x00:
-                    logger.error("Пакет закрытия соединения")
+                    logger.info("Пакет закрытия соединения")
                     return
 
                 elif packet_type == 0x01:
                     uuid = payload.hex()
-                    logger.error(f"UUID получен: {uuid}")
+                    logger.info(f"UUID получен: {uuid}")
 
                 elif packet_type == 0x10:
                     pcm8k = AudioConverter.alaw_to_pcm(payload)
@@ -173,19 +180,19 @@ async def handle_audiosocket_connection(conn):
                     await ws.send(json.dumps(event_append))
                 elif packet_type == 0xFF:
                     error_code = payload.decode("utf-8", errors="ignore")
-                    logger.error(f"Error: {error_code}")
+                    logger.info(f"Error: {error_code}")
 
                 else:
-                    logger.error(
+                    logger.info(
                         f"Непонятный тип пакета: 0x{packet_type:02x}")
 
         except Exception as e:
-            logger.error("AudioSocket connection error:", e)
+            logger.info("AudioSocket connection error:", e)
         finally:
-            logger.error("Closing Realtime listener task...")
+            logger.info("Closing Realtime listener task...")
             listener_task.cancel()
 
-        logger.error("AudioSocket connection closed.")
+        logger.info("AudioSocket connection closed.")
 
 
 async def main():
@@ -199,7 +206,6 @@ async def main():
 
         while True:
             conn, addr = sock.accept()
-            print(f"New AudioSocket client: {addr}")
             # Передадим управление асинхронной handle-функции:
             await handle_audiosocket_connection(conn)
             conn.close()
