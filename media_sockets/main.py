@@ -55,13 +55,10 @@ async def realtime_listener(websocket, conn):
     """
     while True:
         # Ждём следующего server->client сообщения от Realtime API
-
-        logger.info("Перед websocket.recv()...")
         msg = await websocket.recv()
         event = json.loads(msg)
         event_type = event.get("type", "")
         logger.info(f"Получено сообщение от WebSocket {event_type} ")
-        logger.info('Ждём следующего server->client сообщения от Realtime API')
 
         # Модель присылает аудио частями через response.audio.delta
         if event_type == "response.audio.delta":
@@ -153,7 +150,7 @@ async def handle_audiosocket_connection(conn):
 
                 if not data:
                     break
-                await asyncio.sleep(0.2)  # Даем другим задачам поработать
+                await asyncio.sleep(0.1)  # Даем другим задачам поработать
                 packet_type, packet_length, payload = parser.parse_packet()
                 # Обрабатываем разные типы пакетов
                 if packet_type == 0x00:
