@@ -13,7 +13,7 @@ from src.utils import AudioSocketParser, AudioConverter
 from src.constants import OPENAI_API_KEY, REALTIME_URL
 
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,
     format=("%(asctime)s [%(levelname)s] %(funcName)s"
             " at - %(lineno)d line: %(message)s"),
     handlers=[logging.StreamHandler()]
@@ -158,12 +158,12 @@ async def handle_audiosocket_connection(conn):
                 packet_type, packet_length, payload = parser.parse_packet()
                 # Обрабатываем разные типы пакетов
                 if packet_type == 0x00:
-                    logger.info("Пакет закрытия соединения")
+                    logger.debug("Пакет закрытия соединения")
                     return
 
                 elif packet_type == 0x01:
                     uuid = payload.hex()
-                    logger.info(f"UUID получен: {uuid}")
+                    logger.debug(f"UUID получен: {uuid}")
 
                 elif packet_type == 0x10:
                     pcm8k = AudioConverter.alaw_to_pcm(payload)
@@ -177,10 +177,11 @@ async def handle_audiosocket_connection(conn):
                         "type": "input_audio_buffer.append",
                         "audio": b64_chunk
                     }
+                    logger.debug('Отправляю голос в gpt.')
                     await ws.send(json.dumps(event_append))
                 elif packet_type == 0xFF:
                     error_code = payload.decode("utf-8", errors="ignore")
-                    logger.info(f"Error: {error_code}")
+                    logger.error(f"Error: {error_code}")
 
                 else:
                     logger.info(
