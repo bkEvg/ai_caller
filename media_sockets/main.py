@@ -144,47 +144,47 @@ async def handle_audiosocket_connection(reader, writer):
         # и пересылает их в телефонию
         listener_task = asyncio.create_task(realtime_listener(ws, writer))
         parser = AudioSocketParser()
-        try:
-            while True:
-                data = await reader.read(2048)
-                parser.buffer.extend(data)
+        # try:
+        while True:
+            data = await reader.read(2048)
+            parser.buffer.extend(data)
 
-                if not data:
-                    break
+            if not data:
+                break
 
-                packet_type, packet_length, payload = parser.parse_packet()
+            packet_type, packet_length, payload = parser.parse_packet()
 
-                # Обрабатываем разные типы пакетов
-                if packet_type == 0x00:
-                    logger.info("Пакет закрытия соединения")
-                    return
+            # Обрабатываем разные типы пакетов
+            if packet_type == 0x00:
+                logger.info("Пакет закрытия соединения")
+                return
 
-                elif packet_type == 0x01:
-                    uuid = payload.hex()
-                    logger.info(f"UUID получен: {uuid}")
+            elif packet_type == 0x01:
+                uuid = payload.hex()
+                logger.info(f"UUID получен: {uuid}")
 
-                elif packet_type == 0x10:
-                    logger.info(f"Аудио получено")
-                    pcm8k = AudioConverter.alaw_to_pcm(payload)
+            elif packet_type == 0x10:
+                logger.info(f"Аудио получено")
+                pcm8k = AudioConverter.alaw_to_pcm(payload)
 
-                    # Пересэмплируем 8 kHz -> 16 kHz, кодируем в base64
-                    pcm16k = upsample_8k_to_16k(pcm8k)
-                    b64_chunk = base64.b64encode(pcm16k).decode('utf-8')
+                # Пересэмплируем 8 kHz -> 16 kHz, кодируем в base64
+                pcm16k = upsample_8k_to_16k(pcm8k)
+                b64_chunk = base64.b64encode(pcm16k).decode('utf-8')
 
-                    # Отправляем в Realtime API
-                    event_append = {
-                        "type": "input_audio_buffer.append",
-                        "audio": b64_chunk
-                    }
-                    await ws.send(json.dumps(event_append))
+                # Отправляем в Realtime API
+                event_append = {
+                    "type": "input_audio_buffer.append",
+                    "audio": b64_chunk
+                }
+                await ws.send(json.dumps(event_append))
 
-                elif packet_type == 0xFF:
-                    error_code = payload.decode("utf-8", errors="ignore")
-                    logger.error(f"Error: {error_code}")
+            elif packet_type == 0xFF:
+                error_code = payload.decode("utf-8", errors="ignore")
+                logger.error(f"Error: {error_code}")
 
-                else:
-                    logger.info(
-                        f"Непонятный тип пакета: 0x{packet_type:02x}")
+            else:
+                logger.info(
+                    f"Непонятный тип пакета: 0x{packet_type:02x}")
 
         # except Exception as e:
         #     logger.info("AudioSocket connection error:", e)
