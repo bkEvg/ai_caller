@@ -63,7 +63,6 @@ async def realtime_listener(websocket, writer):
         # Модель присылает аудио частями через response.audio.delta
         if event_type == "response.audio.delta":
             logger.info('Подготавливаем ответ')
-            logger.info(event)
             audio_b64 = event.get("delta", "")
             if audio_b64:
                 pcm16k = base64.b64decode(audio_b64)
