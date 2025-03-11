@@ -73,6 +73,7 @@ async def realtime_listener(websocket, writer):
                 if writer.is_closing():
                     logger.warning("Writer закрывается, прерываем отправку")
                     return
+
                 await writer.drain()
 
         elif event_type == "response.text.delta":
