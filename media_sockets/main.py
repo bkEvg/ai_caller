@@ -79,7 +79,6 @@ async def realtime_listener(websocket, writer):
                         pcm8k[i:i + chunk_size])
                     writer.write(frame)
                     await writer.drain()
-                await asyncio.sleep(10)
 
         elif event_type == "response.text.delta":
             # Если нужен текст - обрабатываем.
