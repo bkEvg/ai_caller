@@ -148,7 +148,7 @@ async def handle_audiosocket_connection(reader, writer):
 
         # Запустим фоновую задачу, которая читает ответы от модели
         # и пересылает их в телефонию
-        # listener_task = asyncio.create_task(realtime_listener(ws, writer))
+        listener_task = asyncio.create_task(realtime_listener(ws, writer))
         parser = AudioSocketParser()
         try:
             while True:
@@ -174,6 +174,7 @@ async def handle_audiosocket_connection(reader, writer):
 
                     # Пересэмплируем 8 kHz -> 16 kHz, кодируем в base64
                     pcm16k = upsample_8k_to_16k(pcm8k)
+                    logger.info(f'Длина входящего пакета: {len(pcm8k)}')
                     b64_chunk = base64.b64encode(pcm16k).decode('utf-8')
 
                     # Отправляем в Realtime API
@@ -182,8 +183,6 @@ async def handle_audiosocket_connection(reader, writer):
                         "audio": b64_chunk
                     }
                     await ws.send(json.dumps(event_append))
-                    writer.write(AudioConverter.create_audio_packet(pcm8k))
-                    await writer.drain()
 
                 elif packet_type == 0xFF:
                     error_code = payload.decode("utf-8", errors="ignore")
