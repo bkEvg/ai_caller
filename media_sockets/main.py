@@ -76,7 +76,8 @@ async def realtime_listener(websocket, writer):
                 chunk_size = 190
                 for i in range(0, len(pcm8k), chunk_size):
                     frame = AudioConverter.create_audio_packet(
-                        pcm8k[i:i + chunk_size])
+                        pcm8k[i:i + chunk_size]
+                    )
                     writer.write(frame)
                     await writer.drain()
 
