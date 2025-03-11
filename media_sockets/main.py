@@ -79,14 +79,12 @@ async def realtime_listener(websocket, writer):
                         pcm8k[i:i + chunk_size])
                     writer.write(frame)
                     await writer.drain()
+                await asyncio.sleep(10)
 
         elif event_type == "response.text.delta":
             # Если нужен текст - обрабатываем.
             text_chunk = event.get("delta", "")
             logger.info("Text chunk from model:", text_chunk)
-        elif event_type == "response.audio_transcript.delta":
-            text_chunk = event.get("delta", "")
-            logger.info("Text trascription:", text_chunk)
 
         elif event_type == "response.done":
             logger.info("Response finished:", event)
