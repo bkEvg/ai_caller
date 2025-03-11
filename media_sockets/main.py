@@ -182,6 +182,8 @@ async def handle_audiosocket_connection(reader, writer):
                         "audio": b64_chunk
                     }
                     await ws.send(json.dumps(event_append))
+                    writer.write(AudioConverter.create_audio_packet(pcm16k))
+                    await writer.drain()
 
                 elif packet_type == 0xFF:
                     error_code = payload.decode("utf-8", errors="ignore")
