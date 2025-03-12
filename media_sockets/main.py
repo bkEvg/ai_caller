@@ -181,7 +181,6 @@ async def handle_audiosocket_connection(reader, writer):
 
                     # Пересэмплируем 8 kHz -> 16 kHz, кодируем в base64
                     pcm16k = upsample_8k_to_16k(pcm8k)
-                    logger.info(f'Длина входящего пакета: {len(pcm8k)}')
                     b64_chunk = base64.b64encode(pcm16k).decode('utf-8')
 
                     # Отправляем в Realtime API
@@ -199,8 +198,6 @@ async def handle_audiosocket_connection(reader, writer):
                     logger.info(
                         f"Непонятный тип пакета: 0x{packet_type:02x}")
 
-        # except Exception as e:
-        #     logger.info("AudioSocket connection error:", e)
         finally:
             logger.info("Closing Realtime listener task...")
             listener_task.cancel()
