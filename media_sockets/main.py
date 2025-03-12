@@ -69,11 +69,18 @@ async def realtime_listener(websocket, writer):
                 pcm8k = downsample_16k_to_8k(pcm16k)
                 logger.info(f"Длинна пакета с речью - {len(pcm8k)} байт")
                 frame = AudioConverter.create_audio_packet(pcm8k)
-                writer.write(frame)
+                # writer.write(frame)
                 if writer.is_closing():
                     logger.warning("Writer закрывается, прерываем отправку")
                     return
-                await writer.drain()
+                frame_length = 160
+                for i in range(0, len(pcm8k), frame_length):
+                    writer.write(AudioConverter.create_audio_packet(
+                        pcm8k[i:i+frame_length]
+                    ))
+
+                    await writer.drain()
+                    await asyncio.sleep(0.2)
 
         elif event_type == "response.text.delta":
             # Если нужен текст - обрабатываем.
