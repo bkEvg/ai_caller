@@ -80,7 +80,7 @@ async def realtime_listener(websocket, writer):
                     ))
 
                     await writer.drain()
-                    await asyncio.sleep(0.02)
+                    await asyncio.sleep(0.002)
 
         elif event_type == "response.text.delta":
             # Если нужен текст - обрабатываем.
