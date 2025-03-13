@@ -5,6 +5,7 @@ import numpy as np
 import os
 import socket
 import struct
+from pydub import AudioSegment
 from scipy.signal import resample_poly
 import json
 import websockets
@@ -69,14 +70,15 @@ async def realtime_listener(websocket, writer):
                 pcm8k = downsample_16k_to_8k(pcm16k)
                 logger.info(f"Длина пакета с речью - {len(pcm8k)} байт")
                 frame = AudioConverter.create_audio_packet(pcm8k)
+                new_frame = AudioSegment.from_raw(pcm16k).set_frame_rate(8000)
                 # writer.write(frame)
                 if writer.is_closing():
                     logger.warning("Writer закрывается, прерываем отправку")
                     return
                 frame_length = 160
-                for i in range(0, len(pcm16k), frame_length):
+                for i in range(0, len(new_frame), frame_length):
                     writer.write(AudioConverter.create_audio_packet(
-                        pcm16k[i:i+frame_length]
+                        new_frame[i:i+frame_length]
                     ))
 
                     await writer.drain()
