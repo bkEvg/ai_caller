@@ -81,9 +81,6 @@ async def realtime_listener(websocket, writer):
             if audio_b64:
                 pcm16k = base64.b64decode(audio_b64)
                 pcm8k = downsample_16k_to_8k(pcm16k)
-                logger.info(f"Длина пакета с речью - {len(pcm8k)} байт")
-                frame = AudioConverter.create_audio_packet(pcm8k)
-                # writer.write(frame)
                 if writer.is_closing():
                     logger.warning("Writer закрывается, прерываем отправку")
                     return
@@ -101,7 +98,7 @@ async def realtime_listener(websocket, writer):
             text_chunk = event.get("delta", "")
             logger.info("Text chunk from model:", text_chunk)
         elif event_type == "response.audio_transcript.delta":
-            logger.info(f"Text trascription: {event}")
+            logger.info(f"Text trascription: {event.get('delta')}")
 
         elif event_type == "response.done":
             logger.info("Response finished:", event)
