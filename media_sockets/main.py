@@ -144,15 +144,15 @@ async def handle_audiosocket_connection(reader, writer):
 
                 # Меняем голос
                 # 'alloy', 'ash', 'ballad', 'coral', 'echo', 'sage',
-                # 'shimmer', and 'verse'
-                "voice": "shimmer",
+                # 'shimmer', and 'verse' shimmer
+                "voice": "verse",
 
                 # Общий стиль (тон голоса, запреты на слова,
                 # "характер" ассистента):
                 "instructions": (
                     "Ты дружелюбный, мягко говорящий ассистент. "
                     "Говори с небольшой улыбкой, делай лёгкие паузы. "
-                    "Избегай резких интонаций. Говори как микки маус"
+                    "Избегай резких интонаций."
                 ),
                 # Можно настроить VAD, температуру и т.п.
                 "turn_detection": {
