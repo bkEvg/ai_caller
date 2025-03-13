@@ -2,11 +2,8 @@ import asyncio
 import base64
 import logging
 import numpy as np
-import os
-import socket
-import struct
 from scipy.signal import resample_poly
-import soxr
+from fractions import Fraction
 import json
 import websockets
 
@@ -47,19 +44,30 @@ def downsample_16k_to_8k(pcm16k: bytes) -> bytes:
     # downsampled = resample_poly(data_float, up=1, down=2, window=("kaiser", 5.0))
     # downsampled_int16 = downsampled.astype(np.int16)
     # return downsampled_int16.tobytes()
-    # Генерируем синусоиду 16 кГц
-    sr_in = 16000  # Исходная частота
-    sr_out = 8000  # Целевая частота
-    duration = 1.0  # 1 секунда
 
-    t = np.linspace(0, duration, int(sr_in * duration), endpoint=False)
-    audio_16k = np.sin(2 * np.pi * 440 * t)  # 440 Гц синусоида
+def resample_audio(pcm_in: bytes, sr_in: int, sr_out: int) -> bytes:
+    """
+    Ресэмплирует сырые байты PCM16 (моно) с частоты sr_in (Hz)
+    на частоту sr_out (Hz), возвращая байты PCM16 (моно).
+    """
+    # Превращаем сырые байты int16 -> float32, чтобы scipy могло ресэмплировать
+    data_int16 = np.frombuffer(pcm_in, dtype=np.int16)
+    data_float = data_int16.astype(np.float32)
 
-    # Конвертируем PCM float32 в int16
-    audio_16k_pcm = (audio_16k * 32767).astype(np.int16)
+    # Рассчитываем рациональное отношение up/down
+    # Пример: 16000 / 8000 = 2/1
+    # или 44100 / 16000 ~ 441/160
+    ratio = Fraction(sr_out, sr_in).limit_denominator(1000)
+    up = ratio.numerator
+    down = ratio.denominator
 
-    # Ресемплинг через soxr
-    audio_8k_pcm = soxr.resample(audio_16k_pcm, sr_in, sr_out, quality="HQ")
+    # Выполняем ресэмплинг
+    # resample_poly(data, up, down) изменяет частоту в up/down раз
+    data_resampled = resample_poly(data_float, up, down)
+
+    # Обратно приводим к int16
+    data_int16_out = data_resampled.astype(np.int16)
+    return data_int16_out.tobytes()
 
 
 async def realtime_listener(websocket, writer):
@@ -80,7 +88,8 @@ async def realtime_listener(websocket, writer):
             audio_b64 = event.get("delta", "")
             if audio_b64:
                 pcm16k = base64.b64decode(audio_b64)
-                pcm8k = downsample_16k_to_8k(pcm16k)
+                # pcm8k = downsample_16k_to_8k(pcm16k)
+                pcm8k = resample_audio(pcm16k, 16000, 8000)
                 if writer.is_closing():
                     logger.warning("Writer закрывается, прерываем отправку")
                     return
