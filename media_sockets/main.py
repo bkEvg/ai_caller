@@ -42,10 +42,35 @@ def downsample_16k_to_8k(pcm16k: bytes) -> bytes:
     Переводит массив int16 (16kHz) -> int16 (8kHz)
     Использует resample_poly(..., up=1, down=2)
     """
+    # data_int16 = np.frombuffer(pcm16k, dtype=np.int16)
+    # data_float = data_int16.astype(np.float32)
+    # downsampled = resample_poly(data_float, up=1, down=2, window=("kaiser", 5.0))
+    # downsampled_int16 = downsampled.astype(np.int16)
+    # return downsampled_int16.tobytes()
+    # Преобразуем байты в массив int16
     data_int16 = np.frombuffer(pcm16k, dtype=np.int16)
-    data_float = data_int16.astype(np.float32)
-    downsampled = resample_poly(data_float, up=1, down=2, window=("kaiser", 5.0))
-    downsampled_int16 = downsampled.astype(np.int16)
+
+    # Преобразуем int16 в float32 для работы с resample_poly
+    data_float = data_int16.astype(
+        np.float32) / 32768.0  # Нормализация в диапазон [-1.0, 1.0]
+
+    # Ресемплинг с фильтром низких частот
+    downsampled = resample_poly(data_float, up=1, down=2,
+                                window=("kaiser", 5.0))
+
+    # Проверяем длину аудио
+    expected_length = len(data_float) // 2
+    if len(downsampled) != expected_length:
+        print(
+            f"Предупреждение: длина аудио после ресемплинга "
+            f"({len(downsampled)}) не соответствует ожидаемой "
+            f"({expected_length})")
+
+    # Преобразуем обратно в int16
+    downsampled_int16 = (downsampled * 32768.0).astype(
+        np.int16)  # Денормализация
+
+    # Возвращаем байты
     return downsampled_int16.tobytes()
 
 
@@ -81,7 +106,7 @@ async def realtime_listener(websocket, writer):
                     ))
 
                     await writer.drain()
-                    await asyncio.sleep(0.005)
+                    await asyncio.sleep(0.01)
 
         elif event_type == "response.text.delta":
             # Если нужен текст - обрабатываем.
