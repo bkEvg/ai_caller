@@ -47,21 +47,19 @@ def downsample_16k_to_8k(pcm16k: bytes) -> bytes:
     # downsampled = resample_poly(data_float, up=1, down=2, window=("kaiser", 5.0))
     # downsampled_int16 = downsampled.astype(np.int16)
     # return downsampled_int16.tobytes()
-    # Преобразуем байты в массив int16
-    data_int16 = np.frombuffer(pcm16k, dtype=np.int16)
+    # Генерируем синусоиду 16 кГц
+    sr_in = 16000  # Исходная частота
+    sr_out = 8000  # Целевая частота
+    duration = 1.0  # 1 секунда
 
-    # Преобразуем int16 в float32 для работы с resample_poly
-    data_float = data_int16.astype(np.float32)
+    t = np.linspace(0, duration, int(sr_in * duration), endpoint=False)
+    audio_16k = np.sin(2 * np.pi * 440 * t)  # 440 Гц синусоида
 
-    # Ресемплинг с фильтром низких частот
-    downsampled = resample_poly(data_float, up=1, down=2,
-                                window=("kaiser", 5.0))
+    # Конвертируем PCM float32 в int16
+    audio_16k_pcm = (audio_16k * 32767).astype(np.int16)
 
-    # Преобразуем обратно в int16
-    downsampled_int16 = downsampled.astype(np.int16)
-
-    # Возвращаем байты
-    return downsampled_int16.tobytes()
+    # Ресемплинг через soxr
+    audio_8k_pcm = soxr.resample(audio_16k_pcm, sr_in, sr_out, quality="HQ")
 
 
 async def realtime_listener(websocket, writer):
@@ -89,7 +87,7 @@ async def realtime_listener(websocket, writer):
                 if writer.is_closing():
                     logger.warning("Writer закрывается, прерываем отправку")
                     return
-                frame_length = 320
+                frame_length = 160
                 for i in range(0, len(pcm8k), frame_length):
                     writer.write(AudioConverter.create_audio_packet(
                         pcm8k[i:i+frame_length]
