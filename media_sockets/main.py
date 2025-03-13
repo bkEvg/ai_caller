@@ -45,6 +45,7 @@ def downsample_16k_to_8k(pcm16k: bytes) -> bytes:
     # downsampled_int16 = downsampled.astype(np.int16)
     # return downsampled_int16.tobytes()
 
+
 def resample_audio(pcm_in: bytes, sr_in: int, sr_out: int) -> bytes:
     """
     Ресэмплирует сырые байты PCM16 (моно) с частоты sr_in (Hz)
@@ -94,9 +95,9 @@ async def realtime_listener(websocket, writer):
                     logger.warning("Writer закрывается, прерываем отправку")
                     return
                 frame_length = 160
-                for i in range(0, len(pcm8k), frame_length):
+                for i in range(0, len(pcm16k), frame_length):
                     writer.write(AudioConverter.create_audio_packet(
-                        pcm8k[i:i+frame_length]
+                        pcm16k[i:i+frame_length]
                     ))
 
                     await writer.drain()
@@ -201,7 +202,7 @@ async def handle_audiosocket_connection(reader, writer):
 
                     # Пересэмплируем 8 kHz -> 16 kHz, кодируем в base64
                     pcm16k = upsample_8k_to_16k(pcm8k)
-                    b64_chunk = base64.b64encode(pcm16k).decode('utf-8')
+                    b64_chunk = base64.b64encode(pcm8k).decode('utf-8')
 
                     # Отправляем в Realtime API
                     event_append = {
