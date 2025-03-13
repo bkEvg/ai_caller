@@ -5,8 +5,7 @@ import numpy as np
 import os
 import socket
 import struct
-from pydub import AudioSegment
-from scipy.signal import resample_poly
+from scipy.signal import resample_poly, resample
 import json
 import websockets
 
@@ -37,16 +36,33 @@ def upsample_8k_to_16k(pcm8k: bytes) -> bytes:
     return upsampled_int16.tobytes()
 
 
-def downsample_16k_to_8k(pcm16k: bytes) -> bytes:
+def downsample_16k_to_8k(pcm16k: bytes, original_sample_rate=16000, target_sample_rate=8000) -> bytes:
     """
     Переводит массив int16 (16kHz) -> int16 (8kHz)
     Использует resample_poly(..., up=1, down=2)
     """
-    data_int16 = np.frombuffer(pcm16k, dtype=np.int16)
-    data_float = data_int16.astype(np.float32)
-    downsampled = resample_poly(data_float, 1, 2)
-    downsampled_int16 = downsampled.astype(np.int16)
-    return downsampled_int16.tobytes()
+    # data_int16 = np.frombuffer(pcm16k, dtype=np.int16)
+    # data_float = data_int16.astype(np.float32)
+    # downsampled = resample_poly(data_float, 1, 2)
+    # downsampled_int16 = downsampled.astype(np.int16)
+    # return downsampled_int16.tobytes()
+    # Преобразуем PCM16 байты в массив int16
+    pcm16_array = np.frombuffer(pcm16k, dtype=np.int16)
+
+    # Понижаем частоту дискретизации с 16 кГц до 8 кГц
+    num_samples = int(
+        len(pcm16_array) * target_sample_rate / original_sample_rate)
+    pcm16_resampled = resample(pcm16_array, num_samples)
+
+    # Преобразуем 16-битные данные в 8-битные
+    # 16-битные данные имеют диапазон от -32768 до 32767
+    # 8-битные данные имеют диапазон от 0 до 255
+    pcm8_array = np.uint8((pcm16_resampled + 32768) / 256)
+
+    # Преобразуем массив обратно в байты
+    pcm8_data = pcm8_array.tobytes()
+
+    return pcm8_data
 
 
 async def realtime_listener(websocket, writer):
@@ -70,15 +86,14 @@ async def realtime_listener(websocket, writer):
                 pcm8k = downsample_16k_to_8k(pcm16k)
                 logger.info(f"Длина пакета с речью - {len(pcm8k)} байт")
                 frame = AudioConverter.create_audio_packet(pcm8k)
-                new_frame = AudioSegment.from_raw(pcm16k).set_frame_rate(8000)
                 # writer.write(frame)
                 if writer.is_closing():
                     logger.warning("Writer закрывается, прерываем отправку")
                     return
                 frame_length = 160
-                for i in range(0, len(new_frame), frame_length):
+                for i in range(0, len(pcm8k), frame_length):
                     writer.write(AudioConverter.create_audio_packet(
-                        new_frame[i:i+frame_length]
+                        pcm8k[i:i+frame_length]
                     ))
 
                     await writer.drain()
