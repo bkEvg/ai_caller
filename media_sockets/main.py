@@ -88,16 +88,15 @@ async def realtime_listener(websocket, writer):
             logger.info('Подготавливаем ответ')
             audio_b64 = event.get("delta", "")
             if audio_b64:
-                pcm16k = base64.b64decode(audio_b64)
-                # pcm8k = downsample_16k_to_8k(pcm16k)
-                pcm8k = resample_audio(pcm16k, 16000, 8000)
+                pcm24k = base64.b64decode(audio_b64)
+                pcm8k = resample_audio(pcm24k, 24000, 8000)
                 if writer.is_closing():
                     logger.warning("Writer закрывается, прерываем отправку")
                     return
                 frame_length = 160
-                for i in range(0, len(pcm16k), frame_length):
+                for i in range(0, len(pcm8k), frame_length):
                     writer.write(AudioConverter.create_audio_packet(
-                        pcm16k[i:i+frame_length]
+                        pcm8k[i:i+frame_length]
                     ))
 
                     await writer.drain()
@@ -201,8 +200,8 @@ async def handle_audiosocket_connection(reader, writer):
                     pcm8k = AudioConverter.alaw_to_pcm(payload)
 
                     # Пересэмплируем 8 kHz -> 16 kHz, кодируем в base64
-                    pcm16k = upsample_8k_to_16k(pcm8k)
-                    b64_chunk = base64.b64encode(pcm8k).decode('utf-8')
+                    pcm24k = resample_audio(pcm8k, 8000, 24000)
+                    b64_chunk = base64.b64encode(pcm24k).decode('utf-8')
 
                     # Отправляем в Realtime API
                     event_append = {
