@@ -89,7 +89,7 @@ async def realtime_listener(websocket, writer):
                 if writer.is_closing():
                     logger.warning("Writer закрывается, прерываем отправку")
                     return
-                frame_length = 160
+                frame_length = 320
                 for i in range(0, len(pcm8k), frame_length):
                     writer.write(AudioConverter.create_audio_packet(
                         pcm8k[i:i+frame_length]
