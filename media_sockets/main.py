@@ -5,7 +5,8 @@ import numpy as np
 import os
 import socket
 import struct
-from scipy.signal import resample_poly, resample
+from scipy.signal import resample_poly
+import soxr
 import json
 import websockets
 
@@ -47,22 +48,12 @@ def downsample_16k_to_8k(pcm16k: bytes, original_sample_rate=16000, target_sampl
     # downsampled_int16 = downsampled.astype(np.int16)
     # return downsampled_int16.tobytes()
     # Преобразуем PCM16 байты в массив int16
-    pcm16_array = np.frombuffer(pcm16k, dtype=np.int16)
-
-    # Понижаем частоту дискретизации с 16 кГц до 8 кГц
-    num_samples = int(
-        len(pcm16_array) * target_sample_rate / original_sample_rate)
-    pcm16_resampled = resample(pcm16_array, num_samples)
-
-    # Преобразуем 16-битные данные в 8-битные
-    # 16-битные данные имеют диапазон от -32768 до 32767
-    # 8-битные данные имеют диапазон от 0 до 255
-    pcm8_array = np.uint8((pcm16_resampled + 32768) / 256)
-
-    # Преобразуем массив обратно в байты
-    pcm8_data = pcm8_array.tobytes()
-
-    return pcm8_data
+    data = soxr.resample(
+        pcm16k,
+        original_sample_rate,
+        target_sample_rate
+    ).tobytes()
+    return data
 
 
 async def realtime_listener(websocket, writer):
