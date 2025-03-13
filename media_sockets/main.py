@@ -48,12 +48,26 @@ def downsample_16k_to_8k(pcm16k: bytes, original_sample_rate=16000, target_sampl
     # downsampled_int16 = downsampled.astype(np.int16)
     # return downsampled_int16.tobytes()
     # Преобразуем PCM16 байты в массив int16
-    data = soxr.resample(
-        pcm16k,
-        original_sample_rate,
-        target_sample_rate
-    ).tobytes()
-    return data
+    # Преобразуем PCM16 байты в массив int16
+    pcm16_array = np.frombuffer(pcm16k, dtype=np.int16)
+
+    # Выполняем ресемплинг с помощью soxr
+    pcm16_resampled = soxr.resample(
+        pcm16_array,  # Входные данные
+        original_sample_rate,  # Исходная частота дискретизации
+        target_sample_rate,  # Целевая частота дискретизации
+        quality="HQ"  # Качество ресемплинга (HQ — высокое качество)
+    )
+
+    # Преобразуем 16-битные данные в 8-битные
+    # 16-битные данные имеют диапазон от -32768 до 32767
+    # 8-битные данные имеют диапазон от 0 до 255
+    pcm8_array = np.uint8((pcm16_resampled + 32768) / 256)
+
+    # Преобразуем массив обратно в байты
+    pcm8_data = pcm8_array.tobytes()
+
+    return pcm8_data
 
 
 async def realtime_listener(websocket, writer):
