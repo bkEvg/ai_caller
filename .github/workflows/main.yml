@@ -113,5 +113,6 @@ jobs:
           script: |
             cd ai_caller
             echo "${{ secrets.HOST_PASSWORD }}" | sudo -S docker compose -f docker-compose.production.yml pull
+            echo "${{ secrets.HOST_PASSWORD }}" | sudo -S docker compose -f docker-compose.production.yml down
             echo "${{ secrets.HOST_PASSWORD }}" | sudo -S docker compose -f docker-compose.production.yml up -d
             echo "${{ secrets.HOST_PASSWORD }}" | sudo -S docker image prune -f
