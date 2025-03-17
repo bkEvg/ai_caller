@@ -174,7 +174,7 @@ class WSHandler:
             # Создаем канал для вызова
             client = await self.ari_client.create_channel(self.sip_endpoint)
             self.client_channel_id = client['id']
-            logger.info(f'CLIENT_CHANNEL_ID: {self.client_channel_id}')
+            logger.error(f'CLIENT_CHANNEL_ID: {self.client_channel_id}')
 
             await self.ari_client.add_channel_to_bridge(
                 self.current_bridge_id, self.client_channel_id)
