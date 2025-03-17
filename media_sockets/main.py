@@ -198,7 +198,6 @@ async def handle_audiosocket_connection(reader, writer):
 
                 elif packet_type == 0x10:
                     pcm8k = AudioConverter.alaw_to_pcm(payload)
-                    logger.info("Пакет в GPT отправлен.")
 
                     # Пересэмплируем 8 kHz -> 24 kHz, кодируем в base64
                     pcm24k = resample_audio(pcm8k, 8000, 24000)

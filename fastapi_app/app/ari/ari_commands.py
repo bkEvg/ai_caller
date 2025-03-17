@@ -155,7 +155,7 @@ class WSHandler:
             logger.info(message)
             if event['type'] == 'StasisStart':
                 channel_id = event['channel']['id']
-                await asyncio.sleep(5)
+                await asyncio.sleep(10)
                 await self.ari_client.dial_channel(channel_id)
 
             if event['type'] == 'Dial' and event['dialstatus'] == 'ANSWER':
