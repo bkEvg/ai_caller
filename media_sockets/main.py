@@ -219,6 +219,8 @@ async def handle_audiosocket_connection(reader, writer):
                 else:
                     logger.info(
                         f"Непонятный тип пакета: 0x{packet_type:02x}")
+        except Exception as exc:
+            logger.exception(exc)
 
         finally:
             logger.info("Closing Realtime listener task...")
