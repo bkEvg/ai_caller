@@ -130,7 +130,7 @@ async def handle_audiosocket_connection(reader, writer):
         additional_headers={
             "Authorization": f"Bearer {OPENAI_API_KEY}",
             "OpenAI-Beta": "realtime=v1"
-        }, ping_timeout=1000, ping_interval=1000
+        }, ping_timeout=None, ping_interval=None
     ) as ws:
         logger.info("Connected to Realtime API.")
 
@@ -177,8 +177,8 @@ async def handle_audiosocket_connection(reader, writer):
         # и пересылает их в телефонию
         listener_task = asyncio.create_task(realtime_listener(ws, writer))
         parser = AudioSocketParser()
-        while True:
-            try:
+        try:
+            while True:
                 data = await reader.read(1024)
                 parser.buffer.extend(data)
 
@@ -217,14 +217,14 @@ async def handle_audiosocket_connection(reader, writer):
                 else:
                     logger.info(
                         f"Непонятный тип пакета: 0x{packet_type:02x}")
-            except websockets.exceptions.ConnectionClosedError as exc:
-                logger.exception(exc)
+        except Exception as exc:
+            logger.exception(exc)
 
-            # finally:
-            #     logger.info("Closing Realtime listener task...")
-            #     listener_task.cancel()
-            #     writer.close()
-            #     await writer.wait_closed()
+        finally:
+            logger.info("Closing Realtime listener task...")
+            listener_task.cancel()
+            writer.close()
+            await writer.wait_closed()
 
         logger.info("AudioSocket connection closed.")
 
