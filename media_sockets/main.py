@@ -214,7 +214,11 @@ async def handle_audiosocket_connection(reader, writer):
                         "type": "input_audio_buffer.append",
                         "audio": b64_chunk
                     }
-                    await ws.send(json.dumps(event_append))
+                    try:
+                        await ws.send(json.dumps(event_append))
+                    except Exception:
+                        logger.exception('HERE IS A BUG')
+                        continue
 
                 elif packet_type == 0xFF:
                     error_code = payload.decode("utf-8", errors="ignore")
