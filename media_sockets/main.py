@@ -125,59 +125,64 @@ async def handle_audiosocket_connection(reader, writer):
     Возвращаем управление, когда клиент (телефония) закрыла соединение.
     """
     # Устанавливаем WebSocket-соединение с Realtime API
-    async with websockets.connect(
-        REALTIME_URL,
-        additional_headers={
-            "Authorization": f"Bearer {OPENAI_API_KEY}",
-            "OpenAI-Beta": "realtime=v1"
-        }, ping_timeout=None, ping_interval=None
-    ) as ws:
-        logger.info("Connected to Realtime API.")
-
-        # Настраиваем сессию: audio input/output, PCM16
-        session_update = {
-            "type": "session.update",
-            "session": {
-                "modalities": ["audio", "text"],
-                "input_audio_format": "pcm16",
-                "output_audio_format": "pcm16",
-
-                # Меняем голос
-                # 'alloy', 'ash', 'ballad', 'coral', 'echo', 'sage',
-                # 'shimmer', and 'verse'
-                "voice": "shimmer",
-
-                # Общий стиль (тон голоса, запреты на слова,
-                # "характер" ассистента):
-                "instructions": (
-                    "Ты дружелюбный, мягко говорящий ассистент. "
-                    "Говори с небольшой улыбкой, делай лёгкие паузы. "
-                    "Избегай резких интонаций."
-                ),
-                # Можно настроить VAD, температуру и т.п.
-                "turn_detection": {
-                    "type": "server_vad",
-                    # Порог чувствительности(0.0...1.0)
-                    "threshold": 0.1,
-                    # Сколько миллисекунд тишины считать концом речи
-                    "silence_duration_ms": 500,
-                    # Сколько миллисекунд звука сохранять "до" VAD -
-                    # срабатывания
-                    "prefix_padding_ms": 500,
-                    "create_response": True,
-                    # прерывать, если пользователь заговорил
-                    "interrupt_response": True
-                },
-                "temperature": 0.7
+    # async with websockets.connect(
+    #     REALTIME_URL,
+    #     additional_headers={
+    #         "Authorization": f"Bearer {OPENAI_API_KEY}",
+    #         "OpenAI-Beta": "realtime=v1"
+    #     }
+    # ) as ws:
+    async for ws in websockets.connect(
+            REALTIME_URL,
+            additional_headers={
+                "Authorization": f"Bearer {OPENAI_API_KEY}",
+                "OpenAI-Beta": "realtime=v1"
             }
-        }
-        await ws.send(json.dumps(session_update))
-
-        # Запустим фоновую задачу, которая читает ответы от модели
-        # и пересылает их в телефонию
-        listener_task = asyncio.create_task(realtime_listener(ws, writer))
-        parser = AudioSocketParser()
+    ):
         try:
+            # Настраиваем сессию: audio input/output, PCM16
+            session_update = {
+                "type": "session.update",
+                "session": {
+                    "modalities": ["audio", "text"],
+                    "input_audio_format": "pcm16",
+                    "output_audio_format": "pcm16",
+
+                    # Меняем голос
+                    # 'alloy', 'ash', 'ballad', 'coral', 'echo', 'sage',
+                    # 'shimmer', and 'verse'
+                    "voice": "shimmer",
+
+                    # Общий стиль (тон голоса, запреты на слова,
+                    # "характер" ассистента):
+                    "instructions": (
+                        "Ты дружелюбный, мягко говорящий ассистент. "
+                        "Говори с небольшой улыбкой, делай лёгкие паузы. "
+                        "Избегай резких интонаций."
+                    ),
+                    # Можно настроить VAD, температуру и т.п.
+                    "turn_detection": {
+                        "type": "server_vad",
+                        # Порог чувствительности(0.0...1.0)
+                        "threshold": 0.1,
+                        # Сколько миллисекунд тишины считать концом речи
+                        "silence_duration_ms": 500,
+                        # Сколько миллисекунд звука сохранять "до" VAD -
+                        # срабатывания
+                        "prefix_padding_ms": 500,
+                        "create_response": True,
+                        # прерывать, если пользователь заговорил
+                        "interrupt_response": True
+                    },
+                    "temperature": 0.7
+                }
+            }
+            await ws.send(json.dumps(session_update))
+
+            # Запустим фоновую задачу, которая читает ответы от модели
+            # и пересылает их в телефонию
+            listener_task = asyncio.create_task(realtime_listener(ws, writer))
+            parser = AudioSocketParser()
             while True:
                 data = await reader.read(1024)
                 parser.buffer.extend(data)
@@ -217,16 +222,104 @@ async def handle_audiosocket_connection(reader, writer):
                 else:
                     logger.info(
                         f"Непонятный тип пакета: 0x{packet_type:02x}")
-        except Exception as exc:
-            logger.exception(exc)
+        except websockets.exceptions.ConnectionClosed:
+            logger.exception('Session closed^ retrying')
+            continue
+        # logger.info("Connected to Realtime API.")
 
-        finally:
-            logger.info("Closing Realtime listener task...")
-            listener_task.cancel()
-            writer.close()
-            await writer.wait_closed()
-
-        logger.info("AudioSocket connection closed.")
+        # # Настраиваем сессию: audio input/output, PCM16
+        # session_update = {
+        #     "type": "session.update",
+        #     "session": {
+        #         "modalities": ["audio", "text"],
+        #         "input_audio_format": "pcm16",
+        #         "output_audio_format": "pcm16",
+        #
+        #         # Меняем голос
+        #         # 'alloy', 'ash', 'ballad', 'coral', 'echo', 'sage',
+        #         # 'shimmer', and 'verse'
+        #         "voice": "shimmer",
+        #
+        #         # Общий стиль (тон голоса, запреты на слова,
+        #         # "характер" ассистента):
+        #         "instructions": (
+        #             "Ты дружелюбный, мягко говорящий ассистент. "
+        #             "Говори с небольшой улыбкой, делай лёгкие паузы. "
+        #             "Избегай резких интонаций."
+        #         ),
+        #         # Можно настроить VAD, температуру и т.п.
+        #         "turn_detection": {
+        #             "type": "server_vad",
+        #             # Порог чувствительности(0.0...1.0)
+        #             "threshold": 0.1,
+        #             # Сколько миллисекунд тишины считать концом речи
+        #             "silence_duration_ms": 500,
+        #             # Сколько миллисекунд звука сохранять "до" VAD -
+        #             # срабатывания
+        #             "prefix_padding_ms": 500,
+        #             "create_response": True,
+        #             # прерывать, если пользователь заговорил
+        #             "interrupt_response": True
+        #         },
+        #         "temperature": 0.7
+        #     }
+        # }
+        # await ws.send(json.dumps(session_update))
+        #
+        # # Запустим фоновую задачу, которая читает ответы от модели
+        # # и пересылает их в телефонию
+        # listener_task = asyncio.create_task(realtime_listener(ws, writer))
+        # parser = AudioSocketParser()
+        # try:
+        #     while True:
+        #         data = await reader.read(1024)
+        #         parser.buffer.extend(data)
+        #
+        #         if not data:
+        #             break
+        #
+        #         packet_type, packet_length, payload = parser.parse_packet()
+        #
+        #         # Обрабатываем разные типы пакетов
+        #         if packet_type == 0x00:
+        #             logger.info("Пакет закрытия соединения")
+        #             return
+        #
+        #         elif packet_type == 0x01:
+        #             uuid = payload.hex()
+        #             logger.info(f"UUID получен: {uuid}")
+        #
+        #         elif packet_type == 0x10:
+        #             pcm8k = AudioConverter.alaw_to_pcm(payload)
+        #
+        #             # Пересэмплируем 8 kHz -> 24 kHz, кодируем в base64
+        #             pcm24k = resample_audio(pcm8k, 8000, 24000)
+        #             b64_chunk = base64.b64encode(pcm24k).decode('utf-8')
+        #
+        #             # Отправляем в Realtime API
+        #             event_append = {
+        #                 "type": "input_audio_buffer.append",
+        #                 "audio": b64_chunk
+        #             }
+        #             await ws.send(json.dumps(event_append))
+        #
+        #         elif packet_type == 0xFF:
+        #             error_code = payload.decode("utf-8", errors="ignore")
+        #             logger.error(f"Error: {error_code}")
+        #
+        #         else:
+        #             logger.info(
+        #                 f"Непонятный тип пакета: 0x{packet_type:02x}")
+        # except Exception as exc:
+        #     logger.exception(exc)
+        #
+        # finally:
+        #     logger.info("Closing Realtime listener task...")
+        #     listener_task.cancel()
+        #     writer.close()
+        #     await writer.wait_closed()
+        #
+        # logger.info("AudioSocket connection closed.")
 
 
 async def main():
