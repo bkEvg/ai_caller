@@ -78,8 +78,7 @@ async def realtime_listener(websocket, writer):
     """
     while True:
         # Ждём следующего server->client сообщения от Realtime API
-        # msg = await websocket.recv()
-        msg = await asyncio.wait_for(websocket.recv(), timeout=10)
+        msg = await websocket.recv()
         event = json.loads(msg)
         event_type = event.get("type", "")
         logger.info(f"Получено сообщение от WebSocket {event_type} ")
