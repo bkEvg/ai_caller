@@ -100,7 +100,7 @@ async def realtime_listener(websocket, writer):
                     ))
 
                     await writer.drain()
-                    await asyncio.sleep(0.01)
+                    await asyncio.sleep(0.005)
 
         elif event_type == "response.text.delta":
             # Если нужен текст - обрабатываем.
@@ -136,7 +136,7 @@ async def handle_audiosocket_connection(reader, writer):
         additional_headers={
             "Authorization": f"Bearer {OPENAI_API_KEY}",
             "OpenAI-Beta": "realtime=v1"
-        }, ping_timeout=60
+        }
     ) as ws:
         logger.info("Connected to Realtime API.")
 
