@@ -226,11 +226,11 @@ async def handle_audiosocket_connection(reader, writer):
         except Exception as exc:
             logger.exception(exc)
 
-        finally:
-            logger.info("Closing Realtime listener task...")
-            listener_task.cancel()
-            writer.close()
-            await writer.wait_closed()
+        # finally:
+        #     logger.info("Closing Realtime listener task...")
+        #     listener_task.cancel()
+        #     writer.close()
+        #     await writer.wait_closed()
 
         logger.info("AudioSocket connection closed.")
 
