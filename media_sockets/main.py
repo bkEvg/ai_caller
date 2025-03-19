@@ -158,7 +158,7 @@ async def handle_audiosocket_connection(reader, writer):
                 "turn_detection": {
                     "type": "server_vad",
                     # Порог чувствительности(0.0...1.0)
-                    "threshold": 0.0,
+                    "threshold": 0.1,
                     # Сколько миллисекунд тишины считать концом речи
                     "silence_duration_ms": 500,
                     # Сколько миллисекунд звука сохранять "до" VAD -
