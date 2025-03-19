@@ -130,7 +130,7 @@ async def handle_audiosocket_connection(reader, writer):
         additional_headers={
             "Authorization": f"Bearer {OPENAI_API_KEY}",
             "OpenAI-Beta": "realtime=v1"
-        }, ping_timeout=5, ping_interval=10
+        }, ping_timeout=1000, ping_interval=1000
     ) as ws:
         logger.info("Connected to Realtime API.")
 
