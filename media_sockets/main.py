@@ -177,8 +177,8 @@ async def handle_audiosocket_connection(reader, writer):
         # и пересылает их в телефонию
         listener_task = asyncio.create_task(realtime_listener(ws, writer))
         parser = AudioSocketParser()
-        try:
-            while True:
+        while True:
+            try:
                 data = await reader.read(1024)
                 parser.buffer.extend(data)
 
@@ -217,14 +217,14 @@ async def handle_audiosocket_connection(reader, writer):
                 else:
                     logger.info(
                         f"Непонятный тип пакета: 0x{packet_type:02x}")
-        except Exception as exc:
-            logger.exception(exc)
+            except websockets.exceptions.ConnectionClosedError as exc:
+                logger.exception(exc)
 
-        finally:
-            logger.info("Closing Realtime listener task...")
-            listener_task.cancel()
-            writer.close()
-            await writer.wait_closed()
+            # finally:
+            #     logger.info("Closing Realtime listener task...")
+            #     listener_task.cancel()
+            #     writer.close()
+            #     await writer.wait_closed()
 
         logger.info("AudioSocket connection closed.")
 
