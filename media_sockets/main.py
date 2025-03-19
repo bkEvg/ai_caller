@@ -182,8 +182,6 @@ async def handle_audiosocket_connection(reader, writer):
         # Запустим фоновую задачу, которая читает ответы от модели
         # и пересылает их в телефонию
         listener_task = asyncio.create_task(realtime_listener(ws, writer))
-        # Запускаем задачу для отправки пингов
-        ping_task = asyncio.create_task(keepalive_ping(ws))
         parser = AudioSocketParser()
         try:
             while True:
