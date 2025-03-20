@@ -100,7 +100,7 @@ async def realtime_listener(websocket, writer):
                     ))
 
                     await writer.drain()
-                    await asyncio.sleep(0.01)
+                    # await asyncio.sleep(0.01)
 
         elif event_type == "response.text.delta":
             # Если нужен текст - обрабатываем.
@@ -116,12 +116,6 @@ async def realtime_listener(websocket, writer):
             # Для отладки
             # logger.info("Other event:", event)
             pass
-
-
-async def keepalive_ping(websocket):
-    while True:
-        await asyncio.sleep(20)  # Отправляем пинг каждые 20 секунд
-        await websocket.ping()
 
 
 async def handle_audiosocket_connection(reader, writer):
@@ -215,7 +209,6 @@ async def handle_audiosocket_connection(reader, writer):
                         "audio": b64_chunk
                     }
                     try:
-                        await ws.keepalive()
                         await ws.send(json.dumps(event_append))
                     except Exception:
                         logger.exception('HERE IS A BUG')
