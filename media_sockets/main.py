@@ -164,7 +164,7 @@ async def handle_audiosocket_connection(reader, writer):
                 "turn_detection": {
                     "type": "server_vad",
                     # Порог чувствительности(0.0...1.0)
-                    "threshold": 0.1,
+                    "threshold": 0.5,
                     # Сколько миллисекунд тишины считать концом речи
                     "silence_duration_ms": 500,
                     # Сколько миллисекунд звука сохранять "до" VAD -
@@ -215,6 +215,7 @@ async def handle_audiosocket_connection(reader, writer):
                         "audio": b64_chunk
                     }
                     try:
+                        await ws.keepalive()
                         await ws.send(json.dumps(event_append))
                     except Exception:
                         logger.exception('HERE IS A BUG')
