@@ -136,7 +136,7 @@ async def handle_audiosocket_connection(reader, writer):
         additional_headers={
             "Authorization": f"Bearer {OPENAI_API_KEY}",
             "OpenAI-Beta": "realtime=v1"
-        }
+        }, ping_timeout=None, ping_interval=None, close_timeout=None
     ) as ws:
         logger.info("Connected to Realtime API.")
 
@@ -228,7 +228,7 @@ async def handle_audiosocket_connection(reader, writer):
                     logger.info(
                         f"Непонятный тип пакета: 0x{packet_type:02x}")
         except Exception as exc:
-            logger.exception(exc)
+            logger.error(exc)
 
         # finally:
         #     logger.info("Closing Realtime listener task...")
