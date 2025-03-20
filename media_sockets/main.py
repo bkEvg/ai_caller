@@ -85,7 +85,6 @@ async def realtime_listener(websocket, writer):
 
         # Модель присылает аудио частями через response.audio.delta
         if event_type == "response.audio.delta":
-            logger.info('Подготавливаем ответ')
             audio_b64 = event.get("delta", "")
             if audio_b64:
                 pcm24k = base64.b64decode(audio_b64)
@@ -158,7 +157,7 @@ async def handle_audiosocket_connection(reader, writer):
                 "turn_detection": {
                     "type": "server_vad",
                     # Порог чувствительности(0.0...1.0)
-                    "threshold": 0.5,
+                    "threshold": 0.3,
                     # Сколько миллисекунд тишины считать концом речи
                     "silence_duration_ms": 500,
                     # Сколько миллисекунд звука сохранять "до" VAD -
