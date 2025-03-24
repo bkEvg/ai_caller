@@ -20,32 +20,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def upsample_8k_to_16k(pcm8k: bytes) -> bytes:
-    """
-    Переводит массив int16 (8kHz) -> int16 (16kHz)
-    Использует resample_poly(..., up=2, down=1)
-    """
-    data_int16 = np.frombuffer(pcm8k, dtype=np.int16)
-    # float32 для ресэмплинга
-    data_float = data_int16.astype(np.float32)
-    # Увеличиваем частоту в 2 раза (8k -> 16k)
-    upsampled = resample_poly(data_float, 2, 1)
-    upsampled_int16 = upsampled.astype(np.int16)
-    return upsampled_int16.tobytes()
-
-
-def downsample_16k_to_8k(pcm16k: bytes) -> bytes:
-    """
-    Переводит массив int16 (16kHz) -> int16 (8kHz)
-    Использует resample_poly(..., up=1, down=2)
-    """
-    # data_int16 = np.frombuffer(pcm16k, dtype=np.int16)
-    # data_float = data_int16.astype(np.float32)
-    # downsampled = resample_poly(data_float, up=1, down=2, window=("kaiser", 5.0))
-    # downsampled_int16 = downsampled.astype(np.int16)
-    # return downsampled_int16.tobytes()
-
-
 def resample_audio(pcm_in: bytes, sr_in: int, sr_out: int) -> bytes:
     """
     Ресэмплирует сырые байты PCM16 (моно) с частоты sr_in (Hz)
@@ -92,14 +66,14 @@ async def realtime_listener(websocket, writer):
                 if writer.is_closing():
                     logger.warning("Writer закрывается, прерываем отправку")
                     return
-                frame_length = 160
+                frame_length = len(pcm8k)
                 for i in range(0, len(pcm8k), frame_length):
                     writer.write(AudioConverter.create_audio_packet(
                         pcm8k[i:i+frame_length]
                     ))
 
                     await writer.drain()
-                    await asyncio.sleep(0.01)
+                    # await asyncio.sleep(0.01)
 
         elif event_type == "response.text.delta":
             # Если нужен текст - обрабатываем.
