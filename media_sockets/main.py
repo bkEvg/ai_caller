@@ -50,6 +50,7 @@ async def realtime_listener(websocket, writer):
     Задача, которая получает события от Realtime API
     и отправляет аудио обратно в телефонию.
     """
+    await asyncio.sleep(10)
     while True:
         # Ждём следующего server->client сообщения от Realtime API
         msg = await websocket.recv()
