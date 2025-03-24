@@ -50,7 +50,6 @@ async def realtime_listener(websocket, writer):
     Задача, которая получает события от Realtime API
     и отправляет аудио обратно в телефонию.
     """
-    await asyncio.sleep(10)
     while True:
         # Ждём следующего server->client сообщения от Realtime API
         msg = await websocket.recv()
@@ -67,14 +66,14 @@ async def realtime_listener(websocket, writer):
                 if writer.is_closing():
                     logger.warning("Writer закрывается, прерываем отправку")
                     return
-                frame_length = len(pcm8k)
+                frame_length = 160
                 for i in range(0, len(pcm8k), frame_length):
-                    writer.write(AudioConverter.create_audio_packet(
-                        pcm8k[i:i+frame_length]
-                    ))
-
-                    await writer.drain()
-                    # await asyncio.sleep(0.01)
+                    # writer.write(AudioConverter.create_audio_packet(
+                    #     pcm8k[i:i+frame_length]
+                    # ))
+                    #
+                    # await writer.drain()
+                    await asyncio.sleep(0.01)
 
         elif event_type == "response.text.delta":
             # Если нужен текст - обрабатываем.
