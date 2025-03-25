@@ -68,11 +68,12 @@ async def realtime_listener(websocket, writer):
                     return
                 frame_length = 160
                 for i in range(0, len(pcm8k), frame_length):
-                    writer.write(AudioConverter.create_audio_packet(
-                        pcm8k[i:i+frame_length]
-                    ))
-
-                    await writer.drain()
+                    # writer.write(AudioConverter.create_audio_packet(
+                    #     pcm8k[i:i+frame_length]
+                    # ))
+                    #
+                    # await writer.drain()
+                    logger.info('"Воспроизводим 160 байт"')
                     await asyncio.sleep(0.01)
 
         elif event_type == "response.text.delta":
@@ -126,6 +127,7 @@ async def handle_audiosocket_connection(reader, writer):
                     "Ты дружелюбный, мягко говорящий ассистент. "
                     "Говори с небольшой улыбкой, делай лёгкие паузы. "
                     "Избегай резких интонаций."
+                    "Отвечай всегда строго на русском языке"
                 ),
                 # Можно настроить VAD, температуру и т.п.
                 "turn_detection": {
