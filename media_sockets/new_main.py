@@ -9,7 +9,7 @@ import logging
 from src.utils import AudioSocketParser, AudioConverter
 from src.constants import OPENAI_API_KEY, REALTIME_URL
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 url = REALTIME_URL
@@ -57,10 +57,10 @@ class AudioWebSocketClient:
     def send_audio(self, ws):
         """Читает аудиопоток из reader и отправляет в OpenAI WebSocket."""
         parser = AudioSocketParser()
-        logger.debug("send_audio() запущен, ждем данные...")
+        logger.info("send_audio() запущен, ждем данные...")
         while True:
             try:
-                logger.debug("Ожидание аудиоданных из reader...")
+                logger.info("Ожидание аудиоданных из reader...")
                 future = asyncio.run_coroutine_threadsafe(
                     self.reader.read(1024), self.loop)
                 data = future.result(timeout=50)  # Ожидаем результат
@@ -163,8 +163,8 @@ async def main():
     HOST = '0.0.0.0'
     PORT = 7575
 
-    server = await asyncio.start_server(handle_audiosocket_connection, HOST,
-                                        PORT)
+    server = await asyncio.start_server(
+        handle_audiosocket_connection, HOST, PORT)
     addrs = ', '.join(str(sock.getsockname()) for sock in server.sockets)
     logger.info(f'Serving on {addrs}')
 
