@@ -149,7 +149,7 @@ class AudioWebSocketClient:
     async def run(self):
         """Запускает WebSocket-клиент."""
         logger.debug('run() started')
-        async with websockets.connect(url, extra_headers=headers) as ws:
+        async with websockets.connect(url, additional_headers=headers) as ws:
             self.ws = ws
             await self.on_open()
 
