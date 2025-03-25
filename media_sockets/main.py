@@ -68,12 +68,11 @@ async def realtime_listener(websocket, writer):
                     return
                 frame_length = 160
                 for i in range(0, len(pcm8k), frame_length):
-                    # writer.write(AudioConverter.create_audio_packet(
-                    #     pcm8k[i:i+frame_length]
-                    # ))
-                    #
-                    # await writer.drain()
-                    logger.info('"Воспроизводим 160 байт"')
+                    writer.write(AudioConverter.create_audio_packet(
+                        pcm8k[i:i+frame_length]
+                    ))
+
+                    await writer.drain()
                     await asyncio.sleep(0.01)
 
         elif event_type == "response.text.delta":
@@ -104,7 +103,9 @@ async def handle_audiosocket_connection(reader, writer):
         additional_headers={
             "Authorization": f"Bearer {OPENAI_API_KEY}",
             "OpenAI-Beta": "realtime=v1"
-        }
+        },
+        ping_interval=10,  # Отправлять ping каждые 10 секунд
+        ping_timeout=20,   # Закрывать соединение, если pong не получен за 20 секунд
     ) as ws:
         logger.info("Connected to Realtime API.")
 
