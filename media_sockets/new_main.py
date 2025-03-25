@@ -57,25 +57,29 @@ class AudioWebSocketClient:
     def send_audio(self, ws):
         """Читает аудиопоток из reader и отправляет в OpenAI WebSocket."""
         parser = AudioSocketParser()
+        logger.debug("send_audio() запущен, ждем данные...")
         while True:
             try:
-                # ✅ Запрашиваем чтение из `reader` через event loop
+                logger.debug("Ожидание аудиоданных из reader...")
                 future = asyncio.run_coroutine_threadsafe(
                     self.reader.read(1024), self.loop)
-                data = future.result()  # Ожидаем результат
+                data = future.result(timeout=50)  # Ожидаем результат
 
                 if not data:
+                    logger.warning(
+                        "Получен пустой пакет от reader. Закрываем "
+                        "send_audio()")
                     break
 
                 parser.buffer.extend(data)
                 packet_type, packet_length, payload = parser.parse_packet()
 
                 if packet_type == 0x10:  # Аудиоданные
-                    logger.info(f'Аудио данные есть, длина {len(payload)}')
                     pcm8k = AudioConverter.alaw_to_pcm(payload)
                     pcm24k = self.resample_audio(pcm8k, 8000, 24000)
                     b64_audio = base64.b64encode(pcm24k).decode("utf-8")
-
+                    logger.debug(
+                        f"Отправляем {len(pcm24k)} байт аудио в WebSocket")
                     ws.send(json.dumps({"type": "input_audio_buffer.append",
                                         "audio": b64_audio}))
 
