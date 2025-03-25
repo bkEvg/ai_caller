@@ -8,7 +8,12 @@ import logging
 from src.utils import AudioSocketParser, AudioConverter
 from src.constants import OPENAI_API_KEY, REALTIME_URL
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(
+    level=logging.DEBUG,
+    format=("%(asctime)s [%(levelname)s] %(funcName)s"
+            " at - %(lineno)d line: %(message)s"),
+    handlers=[logging.StreamHandler()]
+)
 logger = logging.getLogger(__name__)
 
 url = REALTIME_URL
