@@ -1,8 +1,8 @@
 import os
 import json
-import websocket
 import base64
 import asyncio
+import websockets
 import logging
 
 from src.utils import AudioSocketParser, AudioConverter
@@ -12,10 +12,10 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 url = REALTIME_URL
-headers = [
-    "Authorization: Bearer " + OPENAI_API_KEY,
-    "OpenAI-Beta: realtime=v1"
-]
+headers = {
+    "Authorization": f"Bearer {OPENAI_API_KEY}",
+    "OpenAI-Beta": "realtime=v1"
+}
 
 
 class AudioWebSocketClient:
@@ -24,9 +24,9 @@ class AudioWebSocketClient:
         self.writer = writer
         self.ws = None
 
-    async def on_open(self, ws):
+    async def on_open(self):
         """Отправляем команду для активации аудио-сессии."""
-        logger.info("🟢 on_open() вызван, WebSocket подключен!")
+        logger.info("WebSocket подключен!")
 
         session_update = {
             "type": "session.update",
@@ -46,27 +46,28 @@ class AudioWebSocketClient:
                 }
             }
         }
-        ws.send(json.dumps(session_update))
-        logger.info("✅ Отправлен запрос session.update")
 
-        # Запускаем `send_audio()` в основном asyncio loop
-        await asyncio.create_task(self.send_audio(ws))
+        await self.ws.send(json.dumps(session_update))
+        logger.info("Отправлен запрос session.update")
 
-    async def send_audio(self, ws):
-        """Читает аудиопоток из reader и отправляет в OpenAI WebSocket."""
+        # Запускаем отправку аудио
+        await self.send_audio()
+
+    async def send_audio(self):
+        """Читает аудиопоток из reader и отправляет в WebSocket."""
         parser = AudioSocketParser()
         logger.info("send_audio() запущен, ждем данные...")
 
         while True:
             try:
                 logger.info("Ожидание аудиоданных из reader...")
-                data = await self.reader.read(1024)  # Теперь просто await!
+                data = await self.reader.read(1024)
 
                 if not data:
                     logger.warning(
                         "Получен пустой пакет от reader."
                         "Закрываем send_audio()")
-                    break
+                    break  # Если аудио закончилось, выходим из цикла
 
                 logger.info(f"Принято {len(data)} байт аудио от reader.")
 
@@ -81,17 +82,19 @@ class AudioWebSocketClient:
 
                     logger.info(
                         f"Отправляем {len(pcm24k)} байт аудио в WebSocket")
-                    ws.send(json.dumps({"type": "input_audio_buffer.append",
-                                        "audio": b64_audio}))
+                    await self.ws.send(json.dumps(
+                        {"type": "input_audio_buffer.append",
+                         "audio": b64_audio}))
 
                 else:
-                    logger.warning(f"⚠️ Пропущен пакет типа {packet_type}")
+                    logger.warning(f"Пропущен пакет типа {packet_type}")
 
             except Exception as e:
-                logger.error(f"❌ Ошибка в send_audio(): {e}")
+                logger.error(f"Ошибка в send_audio(): {e}")
                 break
 
-    def resample_audio(self, pcm_in: bytes, sr_in: int, sr_out: int) -> bytes:
+    @staticmethod
+    def resample_audio(pcm_in: bytes, sr_in: int, sr_out: int) -> bytes:
         """Ресэмплирует PCM16 аудио с sr_in в sr_out."""
         import numpy as np
         from scipy.signal import resample_poly
@@ -107,8 +110,11 @@ class AudioWebSocketClient:
         data_resampled = resample_poly(data_float, up, down)
         return data_resampled.astype(np.int16).tobytes()
 
-    async def on_message(self, ws, message):
-        """Получает аудио-ответ от OpenAI и отправляет его обратно в телефонию."""
+    async def on_message(self, message):
+        """
+        Получает аудио-ответ от OpenAI и отправляет его обратно в
+        телефонию.
+        """
         try:
             event = json.loads(message)
             event_type = event.get("type", "")
@@ -134,26 +140,15 @@ class AudioWebSocketClient:
         except Exception as e:
             logger.error(f"Ошибка обработки ответа WebSocket: {e}")
 
-    def on_close(self, ws, close_status_code, close_msg):
-        logger.info(f"WebSocket закрыт: {close_status_code} - {close_msg}")
-
-    def on_error(self, ws, error):
-        logger.error(f"Ошибка WebSocket: {error}")
-
     async def run(self):
         """Запускает WebSocket-клиент."""
-        loop = asyncio.get_running_loop()
-        self.ws = websocket.WebSocketApp(
-            url,
-            header=headers,
-            on_open=lambda ws: asyncio.run_coroutine_threadsafe(
-                self.on_open(ws), loop),
-            on_message=lambda ws, msg: asyncio.run_coroutine_threadsafe(
-                self.on_message(ws, msg), loop),
-            on_close=self.on_close,
-            on_error=self.on_error
-        )
-        self.ws.run_forever()
+        async with websockets.connect(url, extra_headers=headers) as ws:
+            self.ws = ws
+            await self.on_open()
+
+            # Слушаем сообщения от WebSocket
+            async for message in ws:
+                await self.on_message(message)
 
 
 async def handle_audiosocket_connection(reader, writer):
@@ -168,8 +163,8 @@ async def main():
     HOST = '0.0.0.0'
     PORT = 7575
 
-    server = await asyncio.start_server(handle_audiosocket_connection, HOST,
-                                        PORT)
+    server = await asyncio.start_server(
+        handle_audiosocket_connection, HOST, PORT)
     addrs = ', '.join(str(sock.getsockname()) for sock in server.sockets)
     logger.info(f'Serving on {addrs}')
 
