@@ -56,7 +56,6 @@ class AudioWebSocketClient:
         logger.info("Отправлен запрос session.update")
 
         # Запускаем отправку аудио
-        # await self.send_audio()
         listener_task = asyncio.create_task(self.send_audio())
 
     async def send_audio(self):
@@ -71,9 +70,9 @@ class AudioWebSocketClient:
 
                 if not data:
                     logger.warning(
-                        "Получен пустой пакет от reader."
-                        "Закрываем send_audio()")
-                    break  # Если аудио закончилось, выходим из цикла
+                        "Получен пустой пакет от reader. "
+                        "Ожидаем в send_audio()")
+                    continue  # Если аудио закончилось, выходим из цикла
 
                 logger.info(f"Принято {len(data)} байт аудио от reader.")
 
@@ -136,6 +135,7 @@ class AudioWebSocketClient:
                         self.writer.write(AudioConverter.create_audio_packet(
                             pcm8k[i:i + frame_length]))
                         await self.writer.drain()
+                        await asyncio.sleep(0.01)
 
             elif event_type == "response.text.delta":
                 logger.info(f"Text chunk: {event.get('delta')}")
