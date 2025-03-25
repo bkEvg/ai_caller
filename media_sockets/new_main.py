@@ -150,8 +150,8 @@ class AudioWebSocketClient:
         """Запускает WebSocket-клиент."""
         logger.debug('run() started')
         async with websockets.connect(url, additional_headers=headers,
-                                      ping_interval=120,
-                                      ping_timeout=1200) as ws:
+                                      ping_interval=None,
+                                      ping_timeout=None) as ws:
             self.ws = ws
             await self.on_open()
 
