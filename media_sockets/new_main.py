@@ -6,7 +6,7 @@ import websockets
 import logging
 
 from src.utils import AudioSocketParser, AudioConverter
-from src.constants import OPENAI_API_KEY, REALTIME_URL
+from src.constants import OPENAI_API_KEY, REALTIME_URL, HOST, PORT
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -148,6 +148,7 @@ class AudioWebSocketClient:
 
     async def run(self):
         """Запускает WebSocket-клиент."""
+        logger.debug('run() started')
         async with websockets.connect(url, extra_headers=headers) as ws:
             self.ws = ws
             await self.on_open()
@@ -161,14 +162,12 @@ async def handle_audiosocket_connection(reader, writer):
     """
     Запускает WebSocket-клиент для OpenAI, передаёт аудиоданные и отправляет ответы обратно.
     """
+    logger.debug('handle_audiosocket_connection() started')
     client = AudioWebSocketClient(reader, writer)
     await client.run()
 
 
 async def main():
-    HOST = '0.0.0.0'
-    PORT = 7575
-
     server = await asyncio.start_server(
         handle_audiosocket_connection, HOST, PORT)
     addrs = ', '.join(str(sock.getsockname()) for sock in server.sockets)
