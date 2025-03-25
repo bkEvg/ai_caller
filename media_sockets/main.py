@@ -103,9 +103,7 @@ async def handle_audiosocket_connection(reader, writer):
         additional_headers={
             "Authorization": f"Bearer {OPENAI_API_KEY}",
             "OpenAI-Beta": "realtime=v1"
-        },
-        ping_interval=10,  # Отправлять ping каждые 10 секунд
-        ping_timeout=20,   # Закрывать соединение, если pong не получен за 20 секунд
+        }
     ) as ws:
         logger.info("Connected to Realtime API.")
 
@@ -151,7 +149,7 @@ async def handle_audiosocket_connection(reader, writer):
 
         # Запустим фоновую задачу, которая читает ответы от модели
         # и пересылает их в телефонию
-        # listener_task = asyncio.create_task(realtime_listener(ws, writer))
+        listener_task = asyncio.create_task(realtime_listener(ws, writer))
         parser = AudioSocketParser()
         try:
             while True:
