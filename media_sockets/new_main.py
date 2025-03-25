@@ -2,14 +2,13 @@ import os
 import json
 import websocket
 import base64
-import threading
 import asyncio
 import logging
 
 from src.utils import AudioSocketParser, AudioConverter
 from src.constants import OPENAI_API_KEY, REALTIME_URL
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 url = REALTIME_URL
@@ -20,15 +19,14 @@ headers = [
 
 
 class AudioWebSocketClient:
-    def __init__(self, reader, writer, loop):
-        self.reader = reader  # TCP-соединение (телефония)
-        self.writer = writer  # Отправка данных обратно в телефонию
+    def __init__(self, reader, writer):
+        self.reader = reader
+        self.writer = writer
         self.ws = None
-        self.loop = loop  # Передаем event loop
 
-    def on_open(self, ws):
+    async def on_open(self, ws):
         """Отправляем команду для активации аудио-сессии."""
-        logger.info("Connected to OpenAI Realtime API.")
+        logger.info("🟢 on_open() вызван, WebSocket подключен!")
 
         session_update = {
             "type": "session.update",
@@ -49,28 +47,30 @@ class AudioWebSocketClient:
             }
         }
         ws.send(json.dumps(session_update))
+        logger.info("✅ Отправлен запрос session.update")
 
-        # Запускаем отправку аудио в отдельном потоке
-        threading.Thread(target=self.send_audio, args=(ws,),
-                         daemon=True).start()
+        # Запускаем `send_audio()` в основном asyncio loop
+        await asyncio.create_task(self.send_audio(ws))
 
-    def send_audio(self, ws):
+    async def send_audio(self, ws):
         """Читает аудиопоток из reader и отправляет в OpenAI WebSocket."""
         parser = AudioSocketParser()
         logger.info("send_audio() запущен, ждем данные...")
+
         while True:
             try:
                 logger.info("Ожидание аудиоданных из reader...")
-                future = asyncio.run_coroutine_threadsafe(
-                    self.reader.read(1024), self.loop)
-                data = future.result(timeout=50)  # Ожидаем результат
+                data = await self.reader.read(1024)  # Теперь просто await!
 
                 if not data:
                     logger.warning(
-                        "Получен пустой пакет от reader. Закрываем "
-                        "send_audio()")
+                        "Получен пустой пакет от reader."
+                        "Закрываем send_audio()")
                     break
 
+                logger.info(f"Принято {len(data)} байт аудио от reader.")
+
+                # Добавляем в парсер
                 parser.buffer.extend(data)
                 packet_type, packet_length, payload = parser.parse_packet()
 
@@ -78,13 +78,17 @@ class AudioWebSocketClient:
                     pcm8k = AudioConverter.alaw_to_pcm(payload)
                     pcm24k = self.resample_audio(pcm8k, 8000, 24000)
                     b64_audio = base64.b64encode(pcm24k).decode("utf-8")
-                    logger.debug(
+
+                    logger.info(
                         f"Отправляем {len(pcm24k)} байт аудио в WebSocket")
                     ws.send(json.dumps({"type": "input_audio_buffer.append",
                                         "audio": b64_audio}))
 
+                else:
+                    logger.warning(f"⚠️ Пропущен пакет типа {packet_type}")
+
             except Exception as e:
-                logger.error(f"Ошибка отправки аудио: {e}")
+                logger.error(f"❌ Ошибка в send_audio(): {e}")
                 break
 
     def resample_audio(self, pcm_in: bytes, sr_in: int, sr_out: int) -> bytes:
@@ -103,7 +107,7 @@ class AudioWebSocketClient:
         data_resampled = resample_poly(data_float, up, down)
         return data_resampled.astype(np.int16).tobytes()
 
-    def on_message(self, ws, message):
+    async def on_message(self, ws, message):
         """Получает аудио-ответ от OpenAI и отправляет его обратно в телефонию."""
         try:
             event = json.loads(message)
@@ -119,8 +123,7 @@ class AudioWebSocketClient:
                     for i in range(0, len(pcm8k), frame_length):
                         self.writer.write(AudioConverter.create_audio_packet(
                             pcm8k[i:i + frame_length]))
-                        asyncio.run_coroutine_threadsafe(self.writer.drain(),
-                                                         self.loop)
+                        await self.writer.drain()
 
             elif event_type == "response.text.delta":
                 logger.info(f"Text chunk: {event.get('delta')}")
@@ -137,13 +140,16 @@ class AudioWebSocketClient:
     def on_error(self, ws, error):
         logger.error(f"Ошибка WebSocket: {error}")
 
-    def run(self):
+    async def run(self):
         """Запускает WebSocket-клиент."""
+        loop = asyncio.get_running_loop()
         self.ws = websocket.WebSocketApp(
             url,
             header=headers,
-            on_open=self.on_open,
-            on_message=self.on_message,
+            on_open=lambda ws: asyncio.run_coroutine_threadsafe(
+                self.on_open(ws), loop),
+            on_message=lambda ws, msg: asyncio.run_coroutine_threadsafe(
+                self.on_message(ws, msg), loop),
             on_close=self.on_close,
             on_error=self.on_error
         )
@@ -154,17 +160,16 @@ async def handle_audiosocket_connection(reader, writer):
     """
     Запускает WebSocket-клиент для OpenAI, передаёт аудиоданные и отправляет ответы обратно.
     """
-    loop = asyncio.get_running_loop()
-    client = AudioWebSocketClient(reader, writer, loop)
-    client.run()
+    client = AudioWebSocketClient(reader, writer)
+    await client.run()
 
 
 async def main():
     HOST = '0.0.0.0'
     PORT = 7575
 
-    server = await asyncio.start_server(
-        handle_audiosocket_connection, HOST, PORT)
+    server = await asyncio.start_server(handle_audiosocket_connection, HOST,
+                                        PORT)
     addrs = ', '.join(str(sock.getsockname()) for sock in server.sockets)
     logger.info(f'Serving on {addrs}')
 
