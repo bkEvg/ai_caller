@@ -8,7 +8,7 @@ import logging
 from src.utils import AudioSocketParser, AudioConverter
 from src.constants import OPENAI_API_KEY, REALTIME_URL
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 url = REALTIME_URL
@@ -51,7 +51,8 @@ class AudioWebSocketClient:
         logger.info("Отправлен запрос session.update")
 
         # Запускаем отправку аудио
-        await self.send_audio()
+        # await self.send_audio()
+        listener_task = asyncio.create_task(self.send_audio())
 
     async def send_audio(self):
         """Читает аудиопоток из reader и отправляет в WebSocket."""
