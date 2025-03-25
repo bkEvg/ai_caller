@@ -71,6 +71,7 @@ class AudioWebSocketClient:
                 packet_type, packet_length, payload = parser.parse_packet()
 
                 if packet_type == 0x10:  # Аудиоданные
+                    logger.info(f'Аудио данные есть, длина {len(payload)}')
                     pcm8k = AudioConverter.alaw_to_pcm(payload)
                     pcm24k = self.resample_audio(pcm8k, 8000, 24000)
                     b64_audio = base64.b64encode(pcm24k).decode("utf-8")
