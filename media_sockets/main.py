@@ -185,7 +185,7 @@ async def handle_audiosocket_connection(reader, writer):
                     #     "audio": b64_chunk
                     # }
                     try:
-                        chunk = 1024
+                        chunk = 512
                         for i in range(0, len(b64_chunk), chunk):
                             event_append = {
                                 "type": "input_audio_buffer.append",
