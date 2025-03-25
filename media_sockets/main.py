@@ -180,12 +180,18 @@ async def handle_audiosocket_connection(reader, writer):
                     b64_chunk = base64.b64encode(pcm24k).decode('utf-8')
 
                     # Отправляем в Realtime API
-                    event_append = {
-                        "type": "input_audio_buffer.append",
-                        "audio": b64_chunk
-                    }
+                    # event_append = {
+                    #     "type": "input_audio_buffer.append",
+                    #     "audio": b64_chunk
+                    # }
                     try:
-                        await ws.send(json.dumps(event_append))
+                        chunk = 1024
+                        for i in range(0, len(b64_chunk), chunk):
+                            event_append = {
+                                "type": "input_audio_buffer.append",
+                                "audio": b64_chunk[i:i+chunk]
+                            }
+                            await ws.send(json.dumps(event_append))
                     except Exception:
                         logger.exception('HERE IS A BUG')
                         continue
