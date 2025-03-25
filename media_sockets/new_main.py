@@ -20,10 +20,11 @@ headers = [
 
 
 class AudioWebSocketClient:
-    def __init__(self, reader, writer):
+    def __init__(self, reader, writer, loop):
         self.reader = reader  # TCP-соединение (телефония)
         self.writer = writer  # Отправка данных обратно в телефонию
         self.ws = None
+        self.loop = loop  # Передаем event loop
 
     def on_open(self, ws):
         """Отправляем команду для активации аудио-сессии."""
@@ -49,7 +50,7 @@ class AudioWebSocketClient:
         }
         ws.send(json.dumps(session_update))
 
-        # Запускаем поток, который читает аудио из сокета и отправляет в WebSocket
+        # Запускаем отправку аудио в отдельном потоке
         threading.Thread(target=self.send_audio, args=(ws,),
                          daemon=True).start()
 
@@ -58,8 +59,11 @@ class AudioWebSocketClient:
         parser = AudioSocketParser()
         while True:
             try:
-                data = asyncio.run(
-                    self.reader.read(1024))  # Читаем данные из TCP-сокета
+                # ✅ Запрашиваем чтение из `reader` через event loop
+                future = asyncio.run_coroutine_threadsafe(
+                    self.reader.read(1024), self.loop)
+                data = future.result()  # Ожидаем результат
+
                 if not data:
                     break
 
@@ -110,7 +114,8 @@ class AudioWebSocketClient:
                     for i in range(0, len(pcm8k), frame_length):
                         self.writer.write(AudioConverter.create_audio_packet(
                             pcm8k[i:i + frame_length]))
-                        asyncio.run(self.writer.drain())
+                        asyncio.run_coroutine_threadsafe(self.writer.drain(),
+                                                         self.loop)
 
             elif event_type == "response.text.delta":
                 logger.info(f"Text chunk: {event.get('delta')}")
@@ -144,7 +149,8 @@ async def handle_audiosocket_connection(reader, writer):
     """
     Запускает WebSocket-клиент для OpenAI, передаёт аудиоданные и отправляет ответы обратно.
     """
-    client = AudioWebSocketClient(reader, writer)
+    loop = asyncio.get_running_loop()
+    client = AudioWebSocketClient(reader, writer, loop)
     client.run()
 
 
