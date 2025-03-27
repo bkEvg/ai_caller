@@ -28,6 +28,7 @@ class AudioWebSocketClient:
         self.reader = reader
         self.writer = writer
         self.ws = None
+        self.timer = 0
 
     async def on_open(self):
         """Отправляем команду для активации аудио-сессии."""
@@ -131,12 +132,14 @@ class AudioWebSocketClient:
                     pcm8k = self.resample_audio(pcm24k, 24000, 8000)
 
                     frame_length = 320  # 20 мс для 8 кГц (16 бит на семпл, 160 семплов на канал)
-                    frame_duration_sec = 0.02  # 20 мс (нормальная длительность для телефонии)
+                    frame_duration_sec = 0.02
                     for i in range(0, len(pcm8k), frame_length):
                         self.writer.write(AudioConverter.create_audio_packet(
                             pcm8k[i:i + frame_length]))
                         await self.writer.drain()
                         await asyncio.sleep(frame_duration_sec)
+                        self.timer += frame_duration_sec
+                        logger.info(f"Итого поспали: {self.timer}")
 
             elif event_type == "response.text.delta":
                 logger.info(f"Text chunk: {event.get('delta')}")
@@ -156,8 +159,7 @@ class AudioWebSocketClient:
 
             # Слушаем сообщения от WebSocket
             async for message in ws:
-                # Запускаем обработку в фоновом режиме
-                task = asyncio.create_task(self.on_message(message))
+                await self.on_message(message)
 
 
 
