@@ -130,12 +130,13 @@ class AudioWebSocketClient:
                     pcm24k = base64.b64decode(audio_b64)
                     pcm8k = self.resample_audio(pcm24k, 24000, 8000)
 
-                    frame_length = 360
+                    frame_length = 320  # 20 мс для 8 кГц (16 бит на семпл, 160 семплов на канал)
+                    frame_duration_sec = 0.02  # 20 мс (нормальная длительность для телефонии)
                     for i in range(0, len(pcm8k), frame_length):
                         self.writer.write(AudioConverter.create_audio_packet(
                             pcm8k[i:i + frame_length]))
                         await self.writer.drain()
-                        await asyncio.sleep(0.01)
+                        await asyncio.sleep(frame_duration_sec)
 
             elif event_type == "response.text.delta":
                 logger.info(f"Text chunk: {event.get('delta')}")
