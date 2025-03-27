@@ -150,12 +150,26 @@ class AudioWebSocketClient:
         except Exception as e:
             logger.error(f"Ошибка обработки ответа WebSocket: {e}")
 
+    async def keep_connection_alive(self):
+        """Фоновой процесс для обработки ping/pong сообщений."""
+        try:
+            while True:
+                await asyncio.sleep(10)  # Проверяем раз в 10 секунд
+                if self.ws:
+                    await self.ws.ping()
+                    logger.info("Отправлен WebSocket ping")
+        except Exception as e:
+            logger.warning(f"Ошибка в keep_connection_alive: {e}")
+
     async def run(self):
         """Запускает WebSocket-клиент."""
         logger.debug('run() started')
         async with websockets.connect(url, additional_headers=headers) as ws:
             self.ws = ws
             await self.on_open()
+
+            # Запускаем пинг-понг в фоне
+            ping_task = asyncio.create_task(self.keep_connection_alive())
 
             # Слушаем сообщения от WebSocket
             async for message in ws:
