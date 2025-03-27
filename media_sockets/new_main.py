@@ -130,7 +130,7 @@ class AudioWebSocketClient:
                     pcm24k = base64.b64decode(audio_b64)
                     pcm8k = self.resample_audio(pcm24k, 24000, 8000)
 
-                    frame_length = 160
+                    frame_length = 360
                     for i in range(0, len(pcm8k), frame_length):
                         self.writer.write(AudioConverter.create_audio_packet(
                             pcm8k[i:i + frame_length]))
@@ -149,15 +149,15 @@ class AudioWebSocketClient:
     async def run(self):
         """Запускает WebSocket-клиент."""
         logger.debug('run() started')
-        async with websockets.connect(url, additional_headers=headers,
-                                      ping_interval=None,
-                                      ping_timeout=None) as ws:
+        async with websockets.connect(url, additional_headers=headers) as ws:
             self.ws = ws
             await self.on_open()
 
             # Слушаем сообщения от WebSocket
             async for message in ws:
-                await self.on_message(message)
+                # Запускаем обработку в фоновом режиме
+                task = asyncio.create_task(self.on_message(message))
+
 
 
 async def handle_audiosocket_connection(reader, writer):
