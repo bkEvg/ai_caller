@@ -17,7 +17,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-url = REALTIME_URL
 headers = {
     "Authorization": f"Bearer {OPENAI_API_KEY}",
     "OpenAI-Beta": "realtime=v1"
@@ -129,17 +128,15 @@ class AudioWebSocketClient:
                     pcm24k = base64.b64decode(audio_b64)
                     # pcm8k = self.resample_audio(pcm24k, 24000, 8000)
 
-                    # frame_length = 320  # 20 мс для 8 кГц (16 бит на семпл, 160 семплов на канал)
-                    # frame_duration_sec = 0.02
-                    # for i in range(0, len(pcm24k), frame_length):
-                    #     self.writer.write(AudioConverter.create_audio_packet(
-                    #         pcm24k[i:i + frame_length]))
-                    #     await self.writer.drain()
-                    #     await asyncio.sleep(frame_duration_sec)
-                    #     self.timer += frame_duration_sec
-                    #     logger.info(f"Итого поспали: {self.timer}")
-                    self.writer.write(AudioConverter.create_audio_packet(pcm24k))
-                    await self.writer.drain()
+                    frame_length = 320  # 20 мс для 8 кГц (16 бит на семпл, 160 семплов на канал)
+                    frame_duration_sec = 0.02
+                    for i in range(0, len(pcm24k), frame_length):
+                        self.writer.write(AudioConverter.create_audio_packet(
+                            pcm24k[i:i + frame_length]))
+                        await self.writer.drain()
+                        await asyncio.sleep(frame_duration_sec)
+                        self.timer += frame_duration_sec
+                        logger.info(f"Итого поспали: {self.timer}")
 
             elif event_type == "response.text.delta":
                 logger.info(f"Text chunk: {event.get('delta')}")
@@ -150,11 +147,9 @@ class AudioWebSocketClient:
         except Exception as e:
             logger.error(f"Ошибка обработки ответа WebSocket: {e}")
 
-
     async def run(self):
         """Запускает WebSocket-клиент."""
-        logger.debug('run() started')
-        async with websockets.connect(url, additional_headers=headers,
+        async with websockets.connect(REALTIME_URL, additional_headers=headers,
                                       ping_interval=None) as ws:
             self.ws = ws
             await self.on_open()
@@ -168,7 +163,6 @@ async def handle_audiosocket_connection(reader, writer):
     """
     Запускает WebSocket-клиент для OpenAI, передаёт аудиоданные и отправляет ответы обратно.
     """
-    logger.debug('handle_audiosocket_connection() started')
     client = AudioWebSocketClient(reader, writer)
     await client.run()
 
