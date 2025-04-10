@@ -1,18 +1,17 @@
+import asyncio
+
 from pydub import AudioSegment
 import audioop
 import struct
-import io
-import wave
 from typing import Optional
-import logging
 
-from src.constants import (FRAMES_OF_SILENCE, DEFAULT_SAMPLE_RATE,
-                           DEFAULT_SAMPLE_WIDTH, SENTENCE_TIMER,
-                           CHANNEL_COUNT, SENTENCE_TIMER)
+from src.constants import (DEFAULT_SAMPLE_RATE, CHANNEL_COUNT,
+                           DEFAULT_SAMPLE_WIDTH, SENTENCE_TIMER)
 
 
 class AudioBuffer:
-    def __init__(self, target_duration_sec=SENTENCE_TIMER, sample_rate=DEFAULT_SAMPLE_RATE,
+    def __init__(self, target_duration_sec=SENTENCE_TIMER,
+                 sample_rate=DEFAULT_SAMPLE_RATE,
                  sample_width=DEFAULT_SAMPLE_WIDTH):
         self.buffer = bytearray()
         self.size = target_duration_sec * sample_rate * sample_width
@@ -81,3 +80,67 @@ class AudioSocketParser:
         payload = bytes(self.buffer[3:payload_length])
         del self.buffer[:total_length]
         return obj_type, payload_length, payload
+
+
+class AudioConsumer:
+    """Базовый класс для потребителей аудио данных."""
+
+    def consume_data(self):
+        """Метод который реализует логику потребления."""
+        raise NotImplementedError
+
+
+class AudioSocketConsumer(AudioConsumer):
+    """Консьюмер для аудио сокета."""
+
+    def __init__(self, writer):
+        self.writer = writer
+
+    async def consume_data(self, data):
+        """Логика потребления для аудио сокета."""
+        await self.writer.write(data)
+        await self.writer.drain()
+
+
+class AudioTrasferService:
+
+    def __init__(self, trasfer_to: AudioSocketConsumer):
+        self.buffer: bytes = b''  # Буфер для накопленных данных
+        # Минимальное количество данных для отправки (160 байт на фрейм)
+        self.min_data_to_traslate = 160
+        self.pause = 0.02  # Пауза между отправкой фреймов (20 мс для 8 кГц)
+        self._is_running = False  # Статус работы задачи
+        self._task = None  # Задача, которая будет выполняться асинхронно
+
+    async def consume_if_ready(self):
+        """
+        Задача которая отправляет данные в сервис для потребления им.
+        Например, AudioSocketConsumer отправляет эти данные в сокет writer.
+        """
+        while True:
+            if len(self.buffer) >= self.trasfer_to:
+                data = self.buffer[:self.trasfer_to]
+                self.buffer = self.buffer[self.trasfer_to:]
+                await self.trasfer_to.consume_data(data)
+                await asyncio.sleep(self.pause)
+
+    def add_data(self, data: bytes):
+        """
+        Функция добавления данных в буфер, которая при достаточном количестве
+        данных, запускает задачу по передаче данных.
+        """
+        self.buffer += data
+        if (len(self.buffer) >= self.trasfer_to
+                and not self._is_running):
+            self._task = asyncio.create_task(self.consume_if_ready())
+            self._is_running = True
+
+    def clear(self):
+        self.buffer = b''
+
+    def stop(self):
+        if self._task:
+            self._task.cancel()
+            self._task = None
+        self._is_running = False
+        self.clear()
