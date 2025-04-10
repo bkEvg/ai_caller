@@ -130,7 +130,15 @@ class AudioWebSocketClient:
                 if audio_b64:
                     pcm24k = base64.b64decode(audio_b64)
                     pcm8k = AudioConverter.resample_audio(pcm24k, 24000, 8000)
-                    background_consume_service.add_data(pcm8k)
+                    # background_consume_service.add_data(pcm8k)
+                    min_data = 160
+                    pause = 0.02
+                    for chunk in range(0, len(pcm8k), min_data):
+                        chunk_data = pcm8k[chunk:chunk + min_data]
+                        if chunk_data:
+                            self.writer.write(chunk_data)
+                            self.writer.drain()
+                            await asyncio.sleep(pause)
 
             elif event_type == "response.text.delta":
                 logger.info(f"Text chunk: {event.get('delta')}")
