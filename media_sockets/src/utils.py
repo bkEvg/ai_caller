@@ -148,7 +148,7 @@ class AudioTrasferService:
         данных, запускает задачу по передаче данных.
         """
         self.buffer += data
-        if (len(self.buffer) >= self.trasfer_to
+        if (len(self.buffer) >= self.min_data
                 and not self._is_running):
             self._task = asyncio.create_task(self.consume_if_ready())
             self._is_running = True
