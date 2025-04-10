@@ -85,6 +85,7 @@ class AudioWebSocketClient:
 
                     logger.info(
                         f"Отправляем {len(payload)} байт аудио в WebSocket")
+                    self.writer.write(AudioConverter.create_audio_packet(payload))
                     await self.ws.send(json.dumps(
                         {"type": "input_audio_buffer.append",
                          "audio": b64_audio}))
@@ -156,7 +157,8 @@ class AudioWebSocketClient:
 
             # Слушаем сообщения от WebSocket
             async for message in ws:
-                await self.on_message(message)
+                # await self.on_message(message)
+                pass
 
 
 async def handle_audiosocket_connection(reader, writer):
