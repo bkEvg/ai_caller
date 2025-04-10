@@ -40,7 +40,11 @@ class AudioWebSocketClient:
                 "content": [
                     {
                         "type": "input_text",
-                        "text": "Greet the user with 'Hello there! I am an AI voice assistant powered by Twilio and the OpenAI Realtime API. You can ask me for facts, jokes, or anything you can imagine. How can I help you?'"
+                        "text": ("Greet the user with 'Hello there! I am "
+                                 "an AI voice assistant powered by Twilio "
+                                 "and the OpenAI Realtime API. You can ask "
+                                 "me for facts, jokes, or anything you can "
+                                 "imagine. How can I help you?'")
                     }
                 ]
             }
@@ -78,7 +82,7 @@ class AudioWebSocketClient:
         self.listener_task = asyncio.create_task(self.send_audio())
 
         # Отправляем начальный элемент разговора
-        await self.send_initial_conversation_item(self.ws)
+        # await self.send_initial_conversation_item(self.ws)
 
     async def send_audio(self):
         """Читает аудиопоток из reader и отправляет в WebSocket."""
@@ -105,7 +109,7 @@ class AudioWebSocketClient:
                     b64_audio = base64.b64encode(payload).decode("utf-8")
 
                     logger.info(
-                        f"Отправляем {len(payload)} байт аудио в WebSocket")
+                        f"Отправляем {packet_length} байт аудио в WebSocket")
                     await self.ws.send(json.dumps(
                         {"type": "input_audio_buffer.append",
                          "audio": b64_audio}))
