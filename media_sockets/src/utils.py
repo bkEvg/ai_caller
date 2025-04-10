@@ -146,7 +146,8 @@ class AudioTrasferService:
                 await self.trasfer_to.consume_data(data)
                 await asyncio.sleep(self.pause)
             else:
-                logging.info(f"Недостаточно данных в буфере для передачи. {len(self.buffer)}")
+                # Ожидание, если в буфере недостаточно данных
+                await asyncio.sleep(0.01)
 
     def add_data(self, data: bytes):
         """
