@@ -96,9 +96,10 @@ class AudioWebSocketClient:
         parser = AudioSocketParser()
         logger.info("send_audio() запущен, ждем данные...")
 
+        loop = asyncio.get_event_loop()  # Получаем текущий event loop
         while True:
             try:
-                data = self.reader.read(1024)
+                data = asyncio.run_coroutine_threadsafe(self.reader.read(1024), loop).result()
 
                 if not data:
                     logger.warning("Получен пустой пакет от reader. Ожидаем в send_audio()")
