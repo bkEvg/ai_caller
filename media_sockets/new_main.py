@@ -121,7 +121,7 @@ class AudioWebSocketClient:
                 logger.error(f"Ошибка в send_audio(): {e}")
                 break
 
-    async def on_message(self, message):
+    async def on_message(self, message, background_consume_service):
         """
         Получает аудио-ответ от OpenAI и отправляет его обратно в
         телефонию.
@@ -135,9 +135,6 @@ class AudioWebSocketClient:
                 if audio_b64:
                     pcm24k = base64.b64decode(audio_b64)
                     pcm8k = AudioConverter.resample_audio(pcm24k, 24000, 8000)
-                    socket_consumer = AudioSocketConsumer(self.writer)
-                    background_consume_service = AudioTrasferService(
-                        socket_consumer)
                     background_consume_service.add_data(pcm8k)
 
             elif event_type == "response.text.delta":
@@ -158,8 +155,11 @@ class AudioWebSocketClient:
             await self.on_open()
 
             # Слушаем сообщения от WebSocket
+            socket_consumer = AudioSocketConsumer(self.writer)
+            background_consume_service = AudioTrasferService(
+                socket_consumer)
             async for message in ws:
-                await self.on_message(message)
+                await self.on_message(message, background_consume_service)
 
 
 async def handle_audiosocket_connection(reader, writer):
