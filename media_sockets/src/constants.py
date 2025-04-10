@@ -7,6 +7,8 @@ DEFAULT_SAMPLE_RATE = 8000
 DEFAULT_SAMPLE_WIDTH = 2
 CHANNEL_COUNT = 1
 DEFAULT_LANG = 'ru'
+INPUT_FORMAT = 'g711_alaw'
+OUTPUT_FORMAT = 'g711_alaw'
 
 # кол-во фреймов тишины для распознавания паузы в речи
 FRAMES_OF_SILENCE = 5

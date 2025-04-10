@@ -10,6 +10,7 @@ from .ari_config import (ARI_HOST, STASIS_APP_NAME, EXTERNAL_HOST)
 
 logger = logging.getLogger(__name__)
 
+
 class AriClient:
     """Клиент для работы с ARI."""
 

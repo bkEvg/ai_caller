@@ -6,7 +6,8 @@ import websockets
 import logging
 
 from src.utils import AudioSocketParser, AudioConverter
-from src.constants import OPENAI_API_KEY, REALTIME_URL, HOST, PORT
+from src.constants import (OPENAI_API_KEY, REALTIME_URL, HOST, PORT,
+                           INPUT_FORMAT, OUTPUT_FORMAT)
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -38,8 +39,8 @@ class AudioWebSocketClient:
             "type": "session.update",
             "session": {
                 "modalities": ["audio", "text"],
-                "input_audio_format": "pcm16",
-                "output_audio_format": "pcm16",
+                "input_audio_format": INPUT_FORMAT,
+                "output_audio_format": OUTPUT_FORMAT,
                 "voice": "shimmer",
                 "instructions": "Отвечай четко и дружелюбно на русском.",
                 "turn_detection": {
@@ -57,7 +58,7 @@ class AudioWebSocketClient:
         logger.info("Отправлен запрос session.update")
 
         # Запускаем отправку аудио
-        listener_task = asyncio.create_task(self.send_audio())
+        self.listener_task = asyncio.create_task(self.send_audio())
 
     async def send_audio(self):
         """Читает аудиопоток из reader и отправляет в WebSocket."""
@@ -66,7 +67,6 @@ class AudioWebSocketClient:
 
         while True:
             try:
-                logger.info("Ожидание аудиоданных из reader...")
                 data = await self.reader.read(1024)
 
                 if not data:
@@ -75,19 +75,17 @@ class AudioWebSocketClient:
                         "Ожидаем в send_audio()")
                     continue  # Если аудио закончилось, выходим из цикла
 
-                logger.info(f"Принято {len(data)} байт аудио от reader.")
-
                 # Добавляем в парсер
                 parser.buffer.extend(data)
                 packet_type, packet_length, payload = parser.parse_packet()
 
                 if packet_type == 0x10:  # Аудиоданные
-                    pcm8k = AudioConverter.alaw_to_pcm(payload)
-                    pcm24k = self.resample_audio(pcm8k, 8000, 24000)
-                    b64_audio = base64.b64encode(pcm24k).decode("utf-8")
+                    # pcm8k = AudioConverter.alaw_to_pcm(payload)
+                    # pcm24k = self.resample_audio(pcm8k, 8000, 24000)
+                    b64_audio = base64.b64encode(payload).decode("utf-8")
 
                     logger.info(
-                        f"Отправляем {len(pcm24k)} байт аудио в WebSocket")
+                        f"Отправляем {len(payload)} байт аудио в WebSocket")
                     await self.ws.send(json.dumps(
                         {"type": "input_audio_buffer.append",
                          "audio": b64_audio}))
@@ -129,13 +127,13 @@ class AudioWebSocketClient:
                 audio_b64 = event.get("delta", "")
                 if audio_b64:
                     pcm24k = base64.b64decode(audio_b64)
-                    pcm8k = self.resample_audio(pcm24k, 24000, 8000)
+                    # pcm8k = self.resample_audio(pcm24k, 24000, 8000)
 
                     frame_length = 320  # 20 мс для 8 кГц (16 бит на семпл, 160 семплов на канал)
                     frame_duration_sec = 0.02
-                    for i in range(0, len(pcm8k), frame_length):
+                    for i in range(0, len(pcm24k), frame_length):
                         self.writer.write(AudioConverter.create_audio_packet(
-                            pcm8k[i:i + frame_length]))
+                            pcm24k[i:i + frame_length]))
                         await self.writer.drain()
                         await asyncio.sleep(frame_duration_sec)
                         self.timer += frame_duration_sec
