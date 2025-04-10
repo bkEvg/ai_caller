@@ -86,9 +86,9 @@ class AudioWebSocketClient:
                     logger.info(
                         f"Отправляем {len(payload)} байт аудио в WebSocket")
                     self.writer.write(AudioConverter.create_audio_packet(payload))
-                    await self.ws.send(json.dumps(
-                        {"type": "input_audio_buffer.append",
-                         "audio": b64_audio}))
+                    # await self.ws.send(json.dumps(
+                    #     {"type": "input_audio_buffer.append",
+                    #      "audio": b64_audio}))
 
                 else:
                     logger.warning(f"Пропущен пакет типа {packet_type}")
