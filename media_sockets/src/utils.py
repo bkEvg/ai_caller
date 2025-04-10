@@ -148,6 +148,7 @@ class AudioTrasferService:
             else:
                 # Ожидание, если в буфере недостаточно данных
                 await asyncio.sleep(0.01)
+            logging.info("Цикл отрабатывает один раз")
 
     def add_data(self, data: bytes):
         """

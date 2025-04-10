@@ -10,7 +10,7 @@ from src.constants import (OPENAI_API_KEY, REALTIME_URL, HOST, PORT,
                            INPUT_FORMAT, OUTPUT_FORMAT)
 
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format=("%(asctime)s [%(levelname)s] %(funcName)s"
             " at - %(lineno)d line: %(message)s"),
     handlers=[logging.StreamHandler()]
