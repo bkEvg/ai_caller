@@ -56,6 +56,23 @@ class AudioConverter:
         payload_length = len(pcm_data).to_bytes(2, byteorder="big")
         return packet_type + payload_length + pcm_data
 
+    @staticmethod
+    def resample_audio(pcm_in: bytes, sr_in: int, sr_out: int) -> bytes:
+        """Ресэмплирует PCM16 аудио с sr_in в sr_out."""
+        import numpy as np
+        from scipy.signal import resample_poly
+        from fractions import Fraction
+
+        data_int16 = np.frombuffer(pcm_in, dtype=np.int16)
+        data_float = data_int16.astype(np.float32)
+
+        ratio = Fraction(sr_out, sr_in).limit_denominator(1000)
+        up = ratio.numerator
+        down = ratio.denominator
+
+        data_resampled = resample_poly(data_float, up, down)
+        return data_resampled.astype(np.int16).tobytes()
+
 
 class AudioSocketParser:
 
@@ -105,6 +122,7 @@ class AudioSocketConsumer(AudioConsumer):
 class AudioTrasferService:
 
     def __init__(self, trasfer_to: AudioSocketConsumer):
+        self.trasfer_to = trasfer_to
         self.buffer: bytes = b''  # Буфер для накопленных данных
         # Минимальное количество данных для отправки (160 байт на фрейм)
         self.min_data_to_traslate = 160

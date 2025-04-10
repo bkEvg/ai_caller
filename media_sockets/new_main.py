@@ -5,7 +5,7 @@ import websockets
 import logging
 
 from src.utils import (AudioSocketParser, AudioSocketConsumer,
-                       AudioTrasferService)
+                       AudioTrasferService, AudioConverter)
 from src.constants import (OPENAI_API_KEY, REALTIME_URL, HOST, PORT,
                            INPUT_FORMAT, OUTPUT_FORMAT)
 
@@ -96,23 +96,6 @@ class AudioWebSocketClient:
                 logger.error(f"Ошибка в send_audio(): {e}")
                 break
 
-    @staticmethod
-    def resample_audio(pcm_in: bytes, sr_in: int, sr_out: int) -> bytes:
-        """Ресэмплирует PCM16 аудио с sr_in в sr_out."""
-        import numpy as np
-        from scipy.signal import resample_poly
-        from fractions import Fraction
-
-        data_int16 = np.frombuffer(pcm_in, dtype=np.int16)
-        data_float = data_int16.astype(np.float32)
-
-        ratio = Fraction(sr_out, sr_in).limit_denominator(1000)
-        up = ratio.numerator
-        down = ratio.denominator
-
-        data_resampled = resample_poly(data_float, up, down)
-        return data_resampled.astype(np.int16).tobytes()
-
     async def on_message(self, message):
         """
         Получает аудио-ответ от OpenAI и отправляет его обратно в
@@ -126,9 +109,10 @@ class AudioWebSocketClient:
                 audio_b64 = event.get("delta", "")
                 if audio_b64:
                     pcm24k = base64.b64decode(audio_b64)
-                    pcm8k = self.resample_audio(pcm24k, 24000, 8000)
+                    pcm8k = AudioConverter.resample_audio(pcm24k, 24000, 8000)
                     socket_consumer = AudioSocketConsumer(self.writer)
-                    background_consume_service = AudioTrasferService(socket_consumer)
+                    background_consume_service = AudioTrasferService(
+                        socket_consumer)
                     background_consume_service.add_data(pcm8k)
 
             elif event_type == "response.text.delta":
