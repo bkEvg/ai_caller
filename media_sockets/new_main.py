@@ -1,4 +1,3 @@
-import os
 import json
 import base64
 import asyncio
@@ -6,8 +5,7 @@ import websockets
 import logging
 
 from src.utils import AudioSocketParser, AudioConverter
-from src.constants import (OPENAI_API_KEY, REALTIME_URL, HOST, PORT,
-                           INPUT_FORMAT, OUTPUT_FORMAT)
+from src.constants import OPENAI_API_KEY, REALTIME_URL, HOST, PORT
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -38,8 +36,8 @@ class AudioWebSocketClient:
             "type": "session.update",
             "session": {
                 "modalities": ["audio", "text"],
-                "input_audio_format": INPUT_FORMAT,
-                "output_audio_format": OUTPUT_FORMAT,
+                "input_audio_format": "pcm16",
+                "output_audio_format": "pcm16",
                 "voice": "shimmer",
                 "instructions": "Отвечай четко и дружелюбно на русском.",
                 "turn_detection": {
@@ -79,16 +77,15 @@ class AudioWebSocketClient:
                 packet_type, packet_length, payload = parser.parse_packet()
 
                 if packet_type == 0x10:  # Аудиоданные
-                    # pcm8k = AudioConverter.alaw_to_pcm(payload)
-                    # pcm24k = self.resample_audio(pcm8k, 8000, 24000)
-                    b64_audio = base64.b64encode(payload).decode("utf-8")
+                    pcm8k = AudioConverter.alaw_to_pcm(payload)
+                    pcm24k = self.resample_audio(pcm8k, 8000, 24000)
+                    b64_audio = base64.b64encode(pcm24k).decode("utf-8")
 
                     logger.info(
-                        f"Отправляем {len(payload)} байт аудио в WebSocket")
-                    self.writer.write(AudioConverter.create_audio_packet(payload))
-                    # await self.ws.send(json.dumps(
-                    #     {"type": "input_audio_buffer.append",
-                    #      "audio": b64_audio}))
+                        f"Отправляем {len(pcm24k)} байт аудио в WebSocket")
+                    await self.ws.send(json.dumps(
+                        {"type": "input_audio_buffer.append",
+                         "audio": b64_audio}))
 
                 else:
                     logger.warning(f"Пропущен пакет типа {packet_type}")
@@ -126,14 +123,15 @@ class AudioWebSocketClient:
             if event_type == "response.audio.delta":
                 audio_b64 = event.get("delta", "")
                 if audio_b64:
-                    g711_alaw = base64.b64decode(audio_b64)
-                    # pcm8k = self.resample_audio(pcm24k, 24000, 8000)
+                    pcm24k = base64.b64decode(audio_b64)
+                    pcm8k = self.resample_audio(pcm24k, 24000, 8000)
 
-                    frame_length = 160  # 20 мс для 8 кГц (1 байт на семпл, 160 семплов на канал)
+                    # 20 мс для 8 кГц (16 бит на семпл, 160 семплов на канал)
+                    frame_length = 320
                     frame_duration_sec = 0.02
-                    for i in range(0, len(g711_alaw), frame_length):
+                    for i in range(0, len(pcm8k), frame_length):
                         self.writer.write(AudioConverter.create_audio_packet(
-                            g711_alaw[i:i + frame_length]))
+                            pcm8k[i:i + frame_length]))
                         await self.writer.drain()
                         await asyncio.sleep(frame_duration_sec)
                         self.timer += frame_duration_sec
@@ -150,6 +148,7 @@ class AudioWebSocketClient:
 
     async def run(self):
         """Запускает WebSocket-клиент."""
+        logger.debug('run() started')
         async with websockets.connect(REALTIME_URL, additional_headers=headers,
                                       ping_interval=None) as ws:
             self.ws = ws
@@ -157,14 +156,15 @@ class AudioWebSocketClient:
 
             # Слушаем сообщения от WebSocket
             async for message in ws:
-                # await self.on_message(message)
-                pass
+                await self.on_message(message)
 
 
 async def handle_audiosocket_connection(reader, writer):
     """
-    Запускает WebSocket-клиент для OpenAI, передаёт аудиоданные и отправляет ответы обратно.
+    Запускает WebSocket-клиент для OpenAI, передаёт аудиоданные и
+    отправляет ответы обратно.
     """
+    logger.debug('handle_audiosocket_connection() started')
     client = AudioWebSocketClient(reader, writer)
     await client.run()
 
