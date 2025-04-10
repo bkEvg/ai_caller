@@ -1,4 +1,5 @@
 import asyncio
+import logging
 
 from pydub import AudioSegment
 import audioop
@@ -115,6 +116,7 @@ class AudioSocketConsumer(AudioConsumer):
 
     async def consume_data(self, data):
         """Логика потребления для аудио сокета."""
+        logging.info(f"Отправка {len(data)} байт в сокет")
         await self.writer.write(AudioConverter.create_audio_packet(data))
         await self.writer.drain()
 
@@ -135,6 +137,7 @@ class AudioTrasferService:
         Задача которая отправляет данные в сервис для потребления им.
         Например, AudioSocketConsumer отправляет эти данные в сокет writer.
         """
+        logging.info("Запуск задачи передачи данных от gpt в сокет.")
         while True:
             if len(self.buffer) >= self.min_data:
                 data = self.buffer[:self.min_data]
@@ -147,6 +150,7 @@ class AudioTrasferService:
         Функция добавления данных в буфер, которая при достаточном количестве
         данных, запускает задачу по передаче данных.
         """
+        logging.info(f"Добавление {len(data)} байт в буфер.")
         self.buffer += data
         if (len(self.buffer) >= self.min_data
                 and not self._is_running):
