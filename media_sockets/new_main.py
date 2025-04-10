@@ -4,7 +4,8 @@ import asyncio
 import websockets
 import logging
 
-from src.utils import AudioSocketParser, AudioConverter
+from src.utils import (AudioSocketParser, AudioSocketConsumer,
+                       AudioTrasferService)
 from src.constants import (OPENAI_API_KEY, REALTIME_URL, HOST, PORT,
                            INPUT_FORMAT, OUTPUT_FORMAT)
 
@@ -126,17 +127,9 @@ class AudioWebSocketClient:
                 if audio_b64:
                     pcm24k = base64.b64decode(audio_b64)
                     pcm8k = self.resample_audio(pcm24k, 24000, 8000)
-
-                    # 20 мс для 8 кГц (16 бит на семпл, 160 семплов на канал)
-                    frame_length = 320
-                    frame_duration_sec = 0.02
-                    for i in range(0, len(pcm8k), frame_length):
-                        self.writer.write(AudioConverter.create_audio_packet(
-                            pcm8k[i:i + frame_length]))
-                        await self.writer.drain()
-                        await asyncio.sleep(frame_duration_sec)
-                        self.timer += frame_duration_sec
-                        logger.info(f"Итого поспали: {self.timer}")
+                    socket_consumer = AudioSocketConsumer(self.writer)
+                    background_consume_service = AudioTrasferService(socket_consumer)
+                    background_consume_service.add_data(pcm8k)
 
             elif event_type == "response.text.delta":
                 logger.info(f"Text chunk: {event.get('delta')}")

@@ -98,7 +98,7 @@ class AudioSocketConsumer(AudioConsumer):
 
     async def consume_data(self, data):
         """Логика потребления для аудио сокета."""
-        await self.writer.write(data)
+        await self.writer.write(AudioConverter.create_audio_packet(data))
         await self.writer.drain()
 
 
