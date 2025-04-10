@@ -5,7 +5,8 @@ import websockets
 import logging
 
 from src.utils import AudioSocketParser, AudioConverter
-from src.constants import OPENAI_API_KEY, REALTIME_URL, HOST, PORT
+from src.constants import (OPENAI_API_KEY, REALTIME_URL, HOST, PORT,
+                           INPUT_FORMAT, OUTPUT_FORMAT)
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -36,8 +37,8 @@ class AudioWebSocketClient:
             "type": "session.update",
             "session": {
                 "modalities": ["audio", "text"],
-                "input_audio_format": "pcm16",
-                "output_audio_format": "pcm16",
+                "input_audio_format": INPUT_FORMAT,
+                "output_audio_format": OUTPUT_FORMAT,
                 "voice": "shimmer",
                 "instructions": "Отвечай четко и дружелюбно на русском.",
                 "turn_detection": {
@@ -77,12 +78,12 @@ class AudioWebSocketClient:
                 packet_type, packet_length, payload = parser.parse_packet()
 
                 if packet_type == 0x10:  # Аудиоданные
-                    pcm8k = AudioConverter.alaw_to_pcm(payload)
-                    pcm24k = self.resample_audio(pcm8k, 8000, 24000)
-                    b64_audio = base64.b64encode(pcm24k).decode("utf-8")
+                    # pcm8k = AudioConverter.alaw_to_pcm(payload)
+                    # pcm24k = self.resample_audio(pcm8k, 8000, 24000)
+                    b64_audio = base64.b64encode(payload).decode("utf-8")
 
                     logger.info(
-                        f"Отправляем {len(pcm24k)} байт аудио в WebSocket")
+                        f"Отправляем {len(payload)} байт аудио в WebSocket")
                     await self.ws.send(json.dumps(
                         {"type": "input_audio_buffer.append",
                          "audio": b64_audio}))
