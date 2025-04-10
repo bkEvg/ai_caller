@@ -140,6 +140,7 @@ class AudioTrasferService:
         logging.info("Запуск задачи передачи данных от gpt в сокет.")
         while True:
             if len(self.buffer) >= self.min_data:
+                logging.info(f"{len(self.buffer)} размер буффера")
                 data = self.buffer[:self.min_data]
                 self.buffer = self.buffer[self.min_data:]
                 await self.trasfer_to.consume_data(data)
