@@ -125,7 +125,7 @@ class AudioTrasferService:
         self.trasfer_to = trasfer_to
         self.buffer: bytes = b''  # Буфер для накопленных данных
         # Минимальное количество данных для отправки (160 байт на фрейм)
-        self.min_data_to_traslate = 160
+        self.min_data = 160
         self.pause = 0.02  # Пауза между отправкой фреймов (20 мс для 8 кГц)
         self._is_running = False  # Статус работы задачи
         self._task = None  # Задача, которая будет выполняться асинхронно
@@ -136,9 +136,9 @@ class AudioTrasferService:
         Например, AudioSocketConsumer отправляет эти данные в сокет writer.
         """
         while True:
-            if len(self.buffer) >= self.trasfer_to:
-                data = self.buffer[:self.trasfer_to]
-                self.buffer = self.buffer[self.trasfer_to:]
+            if len(self.buffer) >= self.min_data:
+                data = self.buffer[:self.min_data]
+                self.buffer = self.buffer[self.min_data:]
                 await self.trasfer_to.consume_data(data)
                 await asyncio.sleep(self.pause)
 

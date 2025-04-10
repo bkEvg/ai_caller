@@ -30,6 +30,24 @@ class AudioWebSocketClient:
         self.ws = None
         self.timer = 0
 
+    async def send_initial_conversation_item(ws):
+        """Send initial conversation item if AI talks first."""
+        initial_conversation_item = {
+            "type": "conversation.item.create",
+            "item": {
+                "type": "message",
+                "role": "user",
+                "content": [
+                    {
+                        "type": "input_text",
+                        "text": "Greet the user with 'Hello there! I am an AI voice assistant powered by Twilio and the OpenAI Realtime API. You can ask me for facts, jokes, or anything you can imagine. How can I help you?'"
+                    }
+                ]
+            }
+        }
+        await ws.send(json.dumps(initial_conversation_item))
+        await ws.send(json.dumps({"type": "response.create"}))
+
     async def on_open(self):
         """Отправляем команду для активации аудио-сессии."""
         logger.info("WebSocket подключен!")
@@ -58,6 +76,9 @@ class AudioWebSocketClient:
 
         # Запускаем отправку аудио
         self.listener_task = asyncio.create_task(self.send_audio())
+
+        # Отправляем начальный элемент разговора
+        await self.send_initial_conversation_item(self.ws)
 
     async def send_audio(self):
         """Читает аудиопоток из reader и отправляет в WebSocket."""
