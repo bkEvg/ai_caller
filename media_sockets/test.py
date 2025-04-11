@@ -152,7 +152,14 @@ class AudioWebSocketClient:
         event_type = event.get("type")
         logger.debug(f"Received event type: {event_type}")
 
-        if event_type == "response.audio.delta":
+        if event_type == "error":
+            logger.error(f"Error event received: {event['error']['message']}")
+
+        elif event_type == "response.text.delta":
+            # Print text response incrementally
+            print(event["delta"], end="", flush=True)
+
+        elif event_type == "response.audio.delta":
             # Append audio data to buffer
             audio_data = base64.b64decode(event["delta"])
             self.audio_buffer += audio_data
@@ -167,10 +174,19 @@ class AudioWebSocketClient:
                     self.audio_handler.play_audio(data, self.writer)
                 )
                 logger.info("Done playing audio response")
-                # А точно ли у нас копия выше, или это просто ссылка ?!
                 self.audio_buffer = b''
             else:
                 logger.warning("No audio data to play")
+        elif event_type == "response.done":
+            logger.debug("Response generation completed")
+        elif event_type == "conversation.item.created":
+            logger.debug(f"Conversation item created: {event.get('item')}")
+        elif event_type == "input_audio_buffer.speech_started":
+            logger.debug("Speech started detected by server VAD")
+        elif event_type == "input_audio_buffer.speech_stopped":
+            logger.debug("Speech stopped detected by server VAD")
+        else:
+            logger.debug(f"Unhandled event type: {event_type}")
 
     async def run(self):
         """
