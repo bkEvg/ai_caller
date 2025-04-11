@@ -41,7 +41,7 @@ class AudioHandler:
         """
         output_sample_rate = 8000
         audio_data = AudioConverter.resample_audio(audio_data, 24000, output_sample_rate)
-        chunk_size = 500
+        chunk_size = 16000
         pause = chunk_size / output_sample_rate
         for chunk in range(0, len(audio_data), chunk_size):
             chunk_data = AudioConverter.create_audio_packet(audio_data[chunk:chunk + chunk_size])
