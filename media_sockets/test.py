@@ -51,10 +51,6 @@ class AudioHandler:
                 await writer.drain()
                 logger.debug("Playing audio")
                 await asyncio.sleep(pause)
-        # chunk_data = AudioConverter.create_audio_packet(audio_data)
-        # writer.write(chunk_data)
-        # await writer.drain()
-        # logger.debug("Playing audio")
 
 
 class AudioWebSocketClient:
@@ -90,7 +86,7 @@ class AudioWebSocketClient:
             "prefix_padding_ms": 300,
             # Silence to detect speech stop. With lower values the model
             # will respond more quickly.
-            "silence_duration_ms": 600
+            "silence_duration_ms": 300
         }
 
         self.session_config = {
@@ -103,7 +99,7 @@ class AudioWebSocketClient:
             "input_audio_transcription": {  # Get transcription of user turns
                 "model": "whisper-1"
             },
-            "temperature": 0.6
+            "temperature": 0.7
         }
 
     async def connect(self):
