@@ -1,11 +1,9 @@
 import asyncio
 import websockets
 import json
-import pyaudio
 import base64
 import logging
 import ssl
-import threading
 
 from src.constants import OPENAI_API_KEY, REALTIME_MODEL
 from src.utils import AudioSocketParser, AudioConverter
@@ -32,62 +30,7 @@ class AudioHandler:
     Handles audio input and output using PyAudio.
     """
     def __init__(self):
-        self.p = pyaudio.PyAudio()
-        self.stream = None
         self.audio_buffer = b''
-        self.chunk_size = 1024  # Number of audio frames per buffer
-        self.format = pyaudio.paInt16  # Audio format (16-bit PCM)
-        self.channels = 1  # Mono audio
-        self.rate = 24000  # Sampling rate in Hz
-        self.is_recording = False
-
-    def start_audio_stream(self):
-        """
-        Start the audio input stream.
-        """
-        self.stream = self.p.open(
-            format=self.format,
-            channels=self.channels,
-            rate=self.rate,
-            input=True,
-            frames_per_buffer=self.chunk_size
-        )
-
-    def stop_audio_stream(self):
-        """
-        Stop the audio input stream.
-        """
-        if self.stream:
-            self.stream.stop_stream()
-            self.stream.close()
-
-    def cleanup(self):
-        """
-        Clean up resources by stopping the stream and terminating PyAudio.
-        """
-        if self.stream:
-            self.stop_audio_stream()
-        self.p.terminate()
-
-    def start_recording(self):
-        """Start continuous recording"""
-        self.is_recording = True
-        self.audio_buffer = b''
-        self.start_audio_stream()
-
-    def stop_recording(self):
-        """Stop recording and return the recorded audio"""
-        self.is_recording = False
-        self.stop_audio_stream()
-        return self.audio_buffer
-
-    def record_chunk(self):
-        """Record a single chunk of audio"""
-        if self.stream and self.is_recording:
-            data = self.stream.read(self.chunk_size)
-            self.audio_buffer += data
-            return data
-        return None
 
     async def play_audio(self, audio_data, writer):
         """
@@ -212,35 +155,6 @@ class AudioWebSocketClient:
                 self.audio_buffer = b''
             else:
                 logger.warning("No audio data to play")
-
-    async def send_audio(self):
-        """
-        Record and send audio using server-side turn detection.
-        """
-        logger.debug("Starting audio recording for user input")
-        self.audio_handler.start_recording()
-
-        try:
-            while True:
-                chunk = self.audio_handler.record_chunk()
-                if chunk:
-                    # Encode and send audio chunk
-                    base64_chunk = base64.b64encode(chunk).decode('utf-8')
-                    await self.send_event({
-                        "type": "input_audio_buffer.append",
-                        "audio": base64_chunk
-                    })
-                    await asyncio.sleep(0.01)
-                else:
-                    break
-
-        except Exception as e:
-            logger.error(f"Error during audio recording: {e}")
-            self.audio_handler.stop_recording()
-
-        finally:
-            self.audio_handler.stop_recording()
-            logger.debug("Audio recording stopped")
 
     async def run(self):
         """

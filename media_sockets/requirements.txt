@@ -7,7 +7,6 @@ gTTS==2.5.4
 idna==3.10
 numpy==2.2.3
 pocketsphinx==5.0.4
-PyAudio==0.2.14
 pycparser==2.22
 pydub==0.25.1
 requests==2.32.3
