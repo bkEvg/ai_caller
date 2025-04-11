@@ -39,20 +39,20 @@ class AudioHandler:
         :param audio_data: Received audio data (AI response)
         :param writer: asyncio StreamWriter to send back audio data
         """
-        audio_data = AudioConverter.resample_audio(audio_data, 24000, 8000)
-        min_data = 160
-        pause = 0.02
-        for chunk in range(0, len(audio_data), min_data):
-            chunk_data = AudioConverter.create_audio_packet(audio_data[chunk:chunk + min_data])
-            if chunk_data:
-                writer.write(chunk_data)
-                await writer.drain()
-                logger.debug("Playing audio")
-                await asyncio.sleep(pause)
-        # chunk_data = AudioConverter.create_audio_packet(audio_data)
-        # writer.write(chunk_data)
-        # await writer.drain()
-        # logger.debug("Playing audio")
+        # audio_data = AudioConverter.resample_audio(audio_data, 24000, 8000)
+        # min_data = 160
+        # pause = 0.02
+        # for chunk in range(0, len(audio_data), min_data):
+        #     chunk_data = AudioConverter.create_audio_packet(audio_data[chunk:chunk + min_data])
+        #     if chunk_data:
+        #         writer.write(chunk_data)
+        #         await writer.drain()
+        #         logger.debug("Playing audio")
+        #         await asyncio.sleep(pause)
+        chunk_data = AudioConverter.create_audio_packet(audio_data)
+        writer.write(chunk_data)
+        await writer.drain()
+        logger.debug("Playing audio")
 
 
 class AudioWebSocketClient:
