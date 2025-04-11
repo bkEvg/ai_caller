@@ -130,7 +130,6 @@ class AudioWebSocketClient:
                 if audio_b64:
                     pcm24k = base64.b64decode(audio_b64)
                     pcm8k = AudioConverter.resample_audio(pcm24k, 24000, 8000)
-                    # background_consume_service.add_data(pcm8k)
                     min_data = 160
                     pause = 0.02
                     for chunk in range(0, len(pcm8k), min_data):
