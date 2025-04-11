@@ -40,7 +40,7 @@ class AudioHandler:
         :param writer: asyncio StreamWriter to send back audio data
         """
         audio_data = AudioConverter.resample_audio(audio_data, 24000, 8000)
-        min_data = 1024
+        min_data = 2048
         pause = 0.1
         for chunk in range(0, len(audio_data), min_data):
             chunk_data = AudioConverter.create_audio_packet(audio_data[chunk:chunk + min_data])
