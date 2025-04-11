@@ -199,7 +199,7 @@ class AudioWebSocketClient:
                 else:
                     break
 
-                await asyncio.sleep(0.1)
+                # await asyncio.sleep(0.02)
 
         except Exception as e:
             logger.error(f"Error in audio socket communication: {e}")
