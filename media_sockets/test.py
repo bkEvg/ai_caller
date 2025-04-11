@@ -39,11 +39,12 @@ class AudioHandler:
         :param audio_data: Received audio data (AI response)
         :param writer: asyncio StreamWriter to send back audio data
         """
-        audio_data = AudioConverter.resample_audio(audio_data, 24000, 8000)
-        min_data = 2048
-        pause = 0.1
-        for chunk in range(0, len(audio_data), min_data):
-            chunk_data = AudioConverter.create_audio_packet(audio_data[chunk:chunk + min_data])
+        output_sample_rate = 8000
+        audio_data = AudioConverter.resample_audio(audio_data, 24000, output_sample_rate)
+        chunk_size = 2048
+        pause = chunk_size / output_sample_rate
+        for chunk in range(0, len(audio_data), chunk_size):
+            chunk_data = AudioConverter.create_audio_packet(audio_data[chunk:chunk + chunk_size])
             if chunk_data:
                 writer.write(chunk_data)
                 await writer.drain()
