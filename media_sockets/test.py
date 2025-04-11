@@ -8,7 +8,7 @@ import ssl
 from src.constants import OPENAI_API_KEY, REALTIME_MODEL, HOST, PORT
 from src.utils import AudioSocketParser, AudioConverter
 
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 TOPIC = "Поговорим о культуре в Испании."
@@ -163,29 +163,15 @@ class AudioWebSocketClient:
             # Append audio data to buffer
             audio_data = base64.b64decode(event["delta"])
             self.audio_buffer += audio_data
-            logger.debug("Audio data appended to buffer")
-        elif event_type == "response.audio.done":
-            # # Play the complete audio response
-            # if self.audio_buffer:
-            #     # Создаем копию, что дальше очищение не повляло
-            #     # на воспроизведение и не будет блокировать поток
-            #     data = self.audio_buffer[:]
-            #     asyncio.create_task(
-            #         self.audio_handler.play_audio(data, self.writer)
-            #     )
-            #     logger.info("Done playing audio response")
-            #     self.audio_buffer = b''
-            # else:
-            #     logger.warning("No audio data to play")
-            pass
+            logger.info("Audio data appended to buffer")
         elif event_type == "response.done":
-            logger.debug("Response generation completed")
+            logger.info("Response generation completed")
         elif event_type == "conversation.item.created":
-            logger.debug(f"Conversation item created: {event.get('item')}")
+            logger.info(f"Conversation item created: {event.get('item')}")
         elif event_type == "input_audio_buffer.speech_started":
-            logger.debug("Speech started detected by server VAD")
+            logger.info("Speech started detected by server VAD")
         elif event_type == "input_audio_buffer.speech_stopped":
-            logger.debug("Speech stopped detected by server VAD")
+            logger.info("Speech stopped detected by server VAD")
         elif event_type == "response.content_part.done":
             # Play the complete audio response
             if self.audio_buffer:
@@ -200,7 +186,7 @@ class AudioWebSocketClient:
             else:
                 logger.warning("No audio data to play")
         else:
-            logger.debug(f"Unhandled event type: {event_type}")
+            logger.info(f"Unhandled event type: {event_type}")
 
     async def run(self):
         """
