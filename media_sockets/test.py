@@ -165,6 +165,28 @@ class AudioWebSocketClient:
             self.audio_buffer += audio_data
             logger.debug("Audio data appended to buffer")
         elif event_type == "response.audio.done":
+            # # Play the complete audio response
+            # if self.audio_buffer:
+            #     # Создаем копию, что дальше очищение не повляло
+            #     # на воспроизведение и не будет блокировать поток
+            #     data = self.audio_buffer[:]
+            #     asyncio.create_task(
+            #         self.audio_handler.play_audio(data, self.writer)
+            #     )
+            #     logger.info("Done playing audio response")
+            #     self.audio_buffer = b''
+            # else:
+            #     logger.warning("No audio data to play")
+            pass
+        elif event_type == "response.done":
+            logger.debug("Response generation completed")
+        elif event_type == "conversation.item.created":
+            logger.debug(f"Conversation item created: {event.get('item')}")
+        elif event_type == "input_audio_buffer.speech_started":
+            logger.debug("Speech started detected by server VAD")
+        elif event_type == "input_audio_buffer.speech_stopped":
+            logger.debug("Speech stopped detected by server VAD")
+        elif event_type == "response.content_part.done":
             # Play the complete audio response
             if self.audio_buffer:
                 # Создаем копию, что дальше очищение не повляло
@@ -177,14 +199,6 @@ class AudioWebSocketClient:
                 self.audio_buffer = b''
             else:
                 logger.warning("No audio data to play")
-        elif event_type == "response.done":
-            logger.debug("Response generation completed")
-        elif event_type == "conversation.item.created":
-            logger.debug(f"Conversation item created: {event.get('item')}")
-        elif event_type == "input_audio_buffer.speech_started":
-            logger.debug("Speech started detected by server VAD")
-        elif event_type == "input_audio_buffer.speech_stopped":
-            logger.debug("Speech stopped detected by server VAD")
         else:
             logger.debug(f"Unhandled event type: {event_type}")
 
