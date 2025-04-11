@@ -5,7 +5,7 @@ import base64
 import logging
 import ssl
 
-from src.constants import OPENAI_API_KEY, REALTIME_MODEL
+from src.constants import OPENAI_API_KEY, REALTIME_MODEL, HOST, PORT
 from src.utils import AudioSocketParser, AudioConverter
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -213,7 +213,7 @@ async def main():
     Main entry point for the server.
     """
     server = await asyncio.start_server(
-        handle_audiosocket_connection, 'localhost', 8888
+        handle_audiosocket_connection, HOST, PORT
     )
     addrs = ', '.join(str(sock.getsockname()) for sock in server.sockets)
     logger.info(f'Serving on {addrs}')
