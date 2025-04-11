@@ -77,12 +77,30 @@ class AudioWebSocketClient:
         self.instructions = instructions
         self.voice = voice
 
+        # VAD mode (set to null to disable)
+        self.VAD_turn_detection = True
+        self.VAD_config = {
+            "type": "server_vad",
+            # Activation threshold (0.0-1.0). A higher threshold will require
+            # louder audio to activate the model.
+            "threshold": 0.5,
+            # Audio to include before the VAD detected speech.
+            "prefix_padding_ms": 300,
+            # Silence to detect speech stop. With lower values the model
+            # will respond more quickly.
+            "silence_duration_ms": 600
+        }
+
         self.session_config = {
             "modalities": ["audio", "text"],
             "instructions": self.instructions,
             "voice": self.voice,
             "input_audio_format": "g711_alaw",
             "output_audio_format": "pcm16",
+            "turn_detection": self.VAD_config if self.VAD_turn_detection else None,
+            "input_audio_transcription": {  # Get transcription of user turns
+                "model": "whisper-1"
+            },
             "temperature": 0.6
         }
 
