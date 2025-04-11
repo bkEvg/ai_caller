@@ -197,8 +197,6 @@ class AudioWebSocketClient:
                         "type": "input_audio_buffer.append",
                         "audio": base64_data
                     })
-                else:
-                    break
 
                 # await asyncio.sleep(0.02)
 
@@ -213,7 +211,6 @@ class AudioWebSocketClient:
         """
         Clean up resources by closing the WebSocket and audio handler.
         """
-        self.audio_handler.cleanup()
         if self.ws:
             await self.ws.close()
 
