@@ -203,7 +203,7 @@ class AudioWebSocketClient:
             if self.audio_buffer:
                 # Создаем копию, что дальше очищение не повляло
                 # на воспроизведение и не будет блокировать поток
-                data = self.audio_buffer
+                data = self.audio_buffer[:]
                 asyncio.create_task(
                     self.audio_handler.play_audio(data, self.writer)
                 )
