@@ -6,4 +6,4 @@ COPY ./requirements.txt .
 RUN pip install -r requirements.txt
 RUN apt-get install flac -y
 COPY . .
-CMD ["python", "test.py"]
+CMD ["python", "main.py"]
