@@ -8,7 +8,7 @@ import ssl
 from src.constants import OPENAI_API_KEY, REALTIME_MODEL, HOST, PORT
 from src.utils import AudioSocketParser, AudioConverter
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 TOPIC = "Поговорим о культуре в Испании."
@@ -16,12 +16,6 @@ TOPIC = "Поговорим о культуре в Испании."
 INSTRUCTIONS = f"""
 Ты просто добродушный друг из испании, который неплохо разговаривает по русски
 {TOPIC}.
-"""
-
-KEYBOARD_COMMANDS = """
-q: Quit
-t: Send text message
-a: Send audio message
 """
 
 
