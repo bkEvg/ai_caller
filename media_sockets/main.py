@@ -223,12 +223,12 @@ class AudioWebSocketClient:
             "type": "server_vad",
             # Activation threshold (0.0-1.0). A higher threshold will require
             # louder audio to activate the model.
-            "threshold": 0.5,
+            "threshold": 0.3,
             # Audio to include before the VAD detected speech.
             "prefix_padding_ms": 300,
             # Silence to detect speech stop. With lower values the model
             # will respond more quickly.
-            "silence_duration_ms": 300
+            "silence_duration_ms": 200
         }
 
         self.session_config = {
