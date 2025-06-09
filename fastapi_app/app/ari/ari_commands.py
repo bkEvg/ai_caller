@@ -6,7 +6,7 @@ import websockets
 import json
 import logging
 
-from .ari_config import (ARI_HOST, STASIS_APP_NAME, EXTERNAL_HOST)
+from .ari_config import (ARI_HOST, STASIS_APP_NAME, EXTERNAL_HOST, SIPUNI_HOST)
 
 logger = logging.getLogger(__name__)
 
@@ -143,7 +143,7 @@ class WSHandler:
         self.headers = headers
         self.ari_client = ari_client
         self.phone = phone
-        self.sip_endpoint = f'SIP/{self.phone}@terraai-test'
+        self.sip_endpoint = f'SIP/{self.phone}@{SIPUNI_HOST}'
         self.current_bridge_id = None
         self.client_channel_id = None
         self.snoop_channel_id = None
