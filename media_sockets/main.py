@@ -186,12 +186,12 @@ class AudioHandler:
         chunk_size = 1024
         samples_per_chunk = chunk_size / 2
         pause = samples_per_chunk / output_sample_rate
+        logger.info("Playing audio")
         for chunk in range(0, len(audio_data), chunk_size):
             chunk_data = AudioConverter.create_audio_packet(audio_data[chunk:chunk + chunk_size])
             if chunk_data:
                 writer.write(chunk_data)
                 await writer.drain()
-                logger.debug("Playing audio")
                 await asyncio.sleep(pause)
 
 
@@ -299,7 +299,7 @@ class AudioWebSocketClient:
 
         elif event_type == "response.text.delta":
             # Print text response incrementally
-            print(event["delta"], end="", flush=True)
+            logger.info(event["delta"])
 
         elif event_type == "response.audio.delta":
             # Append audio data to buffer
@@ -330,7 +330,7 @@ class AudioWebSocketClient:
             if self.audio_buffer:
                 data = self.audio_buffer[:]
                 await self.audio_handler.enqueue_audio(data)
-                logger.info("Аудио отправлено в очередь воспроизведения")
+                logger.info(f"Аудио отправлено в очередь воспроизведения {len(data)}")
                 self.audio_buffer = b''
             else:
                 logger.warning("Нет аудиоданных для воспроизведения")
@@ -362,8 +362,6 @@ class AudioWebSocketClient:
                         "type": "input_audio_buffer.append",
                         "audio": base64_data
                     })
-
-                # await asyncio.sleep(0.02)
 
         except Exception as e:
             logger.error(f"Error in audio socket communication: {e}")
