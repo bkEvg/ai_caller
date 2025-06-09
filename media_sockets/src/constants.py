@@ -5,17 +5,13 @@ PORT = 7575
 
 DEFAULT_SAMPLE_RATE = 8000
 DEFAULT_SAMPLE_WIDTH = 2
+OPENAI_OUTPUT_RATE = 24000
+DRAIN_CHUNK_SIZE = 1024
 CHANNEL_COUNT = 1
 DEFAULT_LANG = 'ru'
 INPUT_FORMAT = 'g711_alaw'
 OUTPUT_FORMAT = 'pcm16'
 
-# кол-во фреймов тишины для распознавания паузы в речи
-FRAMES_OF_SILENCE = 5
-
-VAD_HARDNESS = 3
-
-SENTENCE_TIMER = 5
 
 REALTIME_MODEL = "gpt-4o-mini-realtime-preview-2024-12-17"
 REALTIME_URL = f"wss://api.openai.com/v1/realtime?model={REALTIME_MODEL}"
