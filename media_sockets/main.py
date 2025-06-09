@@ -343,6 +343,7 @@ class AudioWebSocketClient:
                 if data:
                     parser.buffer.extend(data)
                     packet_type, packet_length, payload = parser.parse_packet()
+                    logger.info(f"Длина входного пакета {packet_length}")
                     base64_data = base64.b64encode(payload).decode('utf-8')
                     await self.send_event({
                         "type": "input_audio_buffer.append",
