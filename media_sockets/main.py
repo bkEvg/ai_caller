@@ -8,7 +8,7 @@ import ssl
 from src.constants import OPENAI_API_KEY, REALTIME_MODEL, HOST, PORT
 from src.utils import AudioSocketParser, AudioConverter
 
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 INSTRUCTIONS = """
@@ -154,7 +154,27 @@ class AudioHandler:
     def __init__(self):
         self.audio_buffer = b''
 
-    async def play_audio(self, audio_data, writer):
+        self.is_running = False
+        self.audio_queue = asyncio.Queue()
+
+    async def start_playback_loop(self, writer):
+        if self.is_running:
+            return  # уже запущено
+
+        self.is_running = True
+        while True:
+            audio_data = await self.audio_queue.get()
+            try:
+                await self.play_audio(audio_data, writer)
+            except Exception as e:
+                logger.error(f"Ошибка при воспроизведении: {e}")
+            self.audio_queue.task_done()
+
+    async def enqueue_audio(self, audio_data):
+        await self.audio_queue.put(audio_data)
+
+    @staticmethod
+    async def play_audio(audio_data, writer):
         """
         Play audio data.
 
@@ -296,17 +316,24 @@ class AudioWebSocketClient:
             logger.info("Speech stopped detected by server VAD")
         elif event_type == "response.content_part.done":
             # Play the complete audio response
+            # if self.audio_buffer:
+            #     # Создаем копию, что дальше очищение не повляло
+            #     # на воспроизведение и не будет блокировать поток
+            #     data = self.audio_buffer[:]
+            #     asyncio.create_task(
+            #         self.audio_handler.play_audio(data, self.writer)
+            #     )
+            #     logger.info("Done playing audio response")
+            #     self.audio_buffer = b''
+            # else:
+            #     logger.warning("No audio data to play")
             if self.audio_buffer:
-                # Создаем копию, что дальше очищение не повляло
-                # на воспроизведение и не будет блокировать поток
                 data = self.audio_buffer[:]
-                asyncio.create_task(
-                    self.audio_handler.play_audio(data, self.writer)
-                )
-                logger.info("Done playing audio response")
+                await self.audio_handler.enqueue_audio(data)
+                logger.info("Аудио отправлено в очередь воспроизведения")
                 self.audio_buffer = b''
             else:
-                logger.warning("No audio data to play")
+                logger.warning("Нет аудиоданных для воспроизведения")
         else:
             logger.info(f"Unhandled event type: {event_type}")
 
@@ -315,6 +342,9 @@ class AudioWebSocketClient:
         Main loop for handling audio socket interaction.
         """
         await self.connect()
+
+        # Start playing data from Queue
+        asyncio.create_task(self.audio_handler.start_playback_loop(self.writer))
 
         # Start receiving events in the background
         receive_task = asyncio.create_task(self.receive_events())
