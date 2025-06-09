@@ -11,7 +11,7 @@ from src.utils import AudioSocketParser, AudioConverter
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-INSTRUCTIONS = f"""
+INSTRUCTIONS = """
 system
 Мы строим диалог с пользователем, которого нашли на hh.ru.
 Твоя главная задача — провести короткое предварительное телефонное собеседование с целью записи на полноценное интервью. 
