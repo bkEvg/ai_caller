@@ -4,8 +4,12 @@ import json
 import base64
 import logging
 import ssl
+import time
 
-from src.constants import OPENAI_API_KEY, REALTIME_MODEL, HOST, PORT
+from src.constants import (OPENAI_API_KEY, REALTIME_MODEL, HOST, PORT,
+                           OUTPUT_FORMAT, INPUT_FORMAT, DEFAULT_SAMPLE_RATE,
+                           DEFAULT_SAMPLE_WIDTH, OPENAI_OUTPUT_RATE,
+                           DRAIN_CHUNK_SIZE)
 from src.utils import AudioSocketParser, AudioConverter
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -175,24 +179,25 @@ class AudioHandler:
 
     @staticmethod
     async def play_audio(audio_data, writer):
-        """
-        Play audio data.
+        logger.info(f"▶️ Старт воспроизведения: {len(audio_data)} байт")
+        start = time.time()
+        audio_data = AudioConverter.resample_audio(
+            audio_data, OPENAI_OUTPUT_RATE, DEFAULT_SAMPLE_RATE
+        )
+        chunk_size = DRAIN_CHUNK_SIZE
+        samples_per_chunk = chunk_size / DEFAULT_SAMPLE_WIDTH
+        pause = samples_per_chunk / DEFAULT_SAMPLE_RATE
 
-        :param audio_data: Received audio data (AI response)
-        :param writer: asyncio StreamWriter to send back audio data
-        """
-        output_sample_rate = 8000
-        audio_data = AudioConverter.resample_audio(audio_data, 24000, output_sample_rate)
-        chunk_size = 1024
-        samples_per_chunk = chunk_size / 2
-        pause = samples_per_chunk / output_sample_rate
-        logger.info("Playing audio")
         for chunk in range(0, len(audio_data), chunk_size):
-            chunk_data = AudioConverter.create_audio_packet(audio_data[chunk:chunk + chunk_size])
+            chunk_data = AudioConverter.create_audio_packet(
+                audio_data[chunk:chunk + chunk_size]
+            )
             if chunk_data:
                 writer.write(chunk_data)
                 await writer.drain()
                 await asyncio.sleep(pause)
+        duration = time.time() - start
+        logger.info(f"✅ Воспроизведение завершено, длина: {duration:.2f} сек")
 
 
 class AudioWebSocketClient:
@@ -235,8 +240,8 @@ class AudioWebSocketClient:
             "modalities": ["audio", "text"],
             "instructions": self.instructions,
             "voice": self.voice,
-            "input_audio_format": "g711_alaw",
-            "output_audio_format": "pcm16",
+            "input_audio_format": INPUT_FORMAT,
+            "output_audio_format": OUTPUT_FORMAT,
             "turn_detection": self.VAD_config if self.VAD_turn_detection else None,
             "input_audio_transcription": {  # Get transcription of user turns
                 "model": "whisper-1"
@@ -304,8 +309,7 @@ class AudioWebSocketClient:
         elif event_type == "response.audio.delta":
             # Append audio data to buffer
             audio_data = base64.b64decode(event["delta"])
-            self.audio_buffer += audio_data
-            logger.info("Audio data appended to buffer")
+            await self.audio_handler.enqueue_audio(audio_data)
         elif event_type == "response.done":
             logger.info("Response generation completed")
         elif event_type == "conversation.item.created":
@@ -315,25 +319,7 @@ class AudioWebSocketClient:
         elif event_type == "input_audio_buffer.speech_stopped":
             logger.info("Speech stopped detected by server VAD")
         elif event_type == "response.content_part.done":
-            # Play the complete audio response
-            # if self.audio_buffer:
-            #     # Создаем копию, что дальше очищение не повляло
-            #     # на воспроизведение и не будет блокировать поток
-            #     data = self.audio_buffer[:]
-            #     asyncio.create_task(
-            #         self.audio_handler.play_audio(data, self.writer)
-            #     )
-            #     logger.info("Done playing audio response")
-            #     self.audio_buffer = b''
-            # else:
-            #     logger.warning("No audio data to play")
-            if self.audio_buffer:
-                data = self.audio_buffer[:]
-                await self.audio_handler.enqueue_audio(data)
-                logger.info(f"Аудио отправлено в очередь воспроизведения {len(data)}")
-                self.audio_buffer = b''
-            else:
-                logger.warning("Нет аудиоданных для воспроизведения")
+            pass
         else:
             logger.info(f"Unhandled event type: {event_type}")
 
@@ -357,6 +343,7 @@ class AudioWebSocketClient:
                 if data:
                     parser.buffer.extend(data)
                     packet_type, packet_length, payload = parser.parse_packet()
+                    logger.info(f"Длина входного пакета {packet_length}")
                     base64_data = base64.b64encode(payload).decode('utf-8')
                     await self.send_event({
                         "type": "input_audio_buffer.append",
