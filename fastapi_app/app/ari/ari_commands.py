@@ -164,8 +164,6 @@ class WSHandler:
 
             if event_type == 'Dial' and event['dialstatus'] == 'ANSWER':
                 # Создаем передачу потока во внешний ресурс
-                external_media = await self.ari_client.create_external_media()
-                self.current_external_id = external_media['id']
                 await self.ari_client.add_channel_to_bridge(
                     self.current_bridge_id, self.current_external_id)
 
@@ -184,7 +182,6 @@ class WSHandler:
             self.client_channel_id = client['id']
             logger.error(f'CLIENT_CHANNEL_ID: {self.client_channel_id}')
 
-            await self.ari_client.add_channel_to_bridge(
-                self.current_bridge_id, self.client_channel_id)
-
+            external_media = await self.ari_client.create_external_media()
+            self.current_external_id = external_media['id']
             await self.handle_events(websocket)
