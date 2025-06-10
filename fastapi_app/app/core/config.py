@@ -5,8 +5,8 @@ from pydantic import Field
 
 
 class Settings(BaseSettings):
-    ari_pass: str = Field(..., alias='ARI_PASS')
     db_url: str
+    ari_pass: str
     default_timezone: str = Field('Europe/Moscow')
     app_title: str = Field('Нейро-Ассистент')
     app_description: str = Field('Отправляйте звонки на номера России')
