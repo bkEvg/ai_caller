@@ -41,6 +41,4 @@ async def create_call(phone: Phone, **kwargs) -> Call:
             .where(Call.id == call_obj.id)
         )
         result = await session.scalar(query)
-
-        # result = await session.run_sync(get_related_objs, call_obj.id)
     return result

@@ -49,14 +49,14 @@ class BaseResponse(BaseModel):
     pass
 
 
-class StatusesResponse(BaseResponse):
+class StatusesResponse(BaseModel):
     """Schema for CallStatus model"""
     status_str: str
 
     model_config = ConfigDict(from_attributes=True)
 
 
-class PhoneResponse(BaseResponse):
+class PhoneResponse(BaseModel):
     """Schema for Phone model"""
     digits: str
 
