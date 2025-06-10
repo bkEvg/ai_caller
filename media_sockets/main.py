@@ -220,6 +220,7 @@ class AudioWebSocketClient:
                     parser.buffer.extend(data)
                     packet_type, packet_length, payload = parser.parse_packet()
                     base64_data = base64.b64encode(payload).decode('utf-8')
+                    logger.info(f"Отправляю {packet_length} байтов в GPT")
                     await self.send_event({
                         "type": "input_audio_buffer.append",
                         "audio": base64_data

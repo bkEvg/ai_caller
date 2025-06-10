@@ -9,7 +9,7 @@ from app.crud.ai_agent import get_phone, create_call, create_phone
 calls_router = APIRouter()
 
 
-@calls_router.post('', response_model=CallResponse,
+@calls_router.post('',
                    summary='Позвонить',
                    description=("Отправить запрос на вызов "
                                 "номера Нейро Ассистентом."),
@@ -33,4 +33,4 @@ async def make_call(
     call = await create_call(
         phone
     )
-    return call
+    return 'call'
