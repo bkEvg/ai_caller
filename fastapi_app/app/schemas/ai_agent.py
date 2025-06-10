@@ -46,24 +46,28 @@ class PhoneRequest(BaseModel):
 
 
 class BaseResponse(BaseModel):
-    model_config = ConfigDict(
-        from_attributes=True
-    )
+    pass
 
 
 class StatusesResponse(BaseResponse):
     """Schema for CallStatus model"""
     status_str: str
 
+    model_config = ConfigDict(from_attributes=True)
+
 
 class PhoneResponse(BaseResponse):
     """Schema for Phone model"""
     digits: str
 
+    model_config = ConfigDict(from_attributes=True)
 
-class CallResponse(BaseResponse):
+
+class CallResponse(BaseModel):
     """Schema for Call model"""
 
     channel_id: Optional[str] = None
     phone: PhoneResponse
     statuses: list[StatusesResponse]
+
+    model_config = ConfigDict(from_attributes=True)
