@@ -1,6 +1,7 @@
 from typing import Optional
 
 from sqlalchemy import select
+from sqlalchemy.orm import joinedload
 
 from app.models.ai_agent import Call, Phone
 from app.schemas.ai_agent import PhoneRequest
@@ -27,13 +28,19 @@ async def get_phone(phone: PhoneRequest) -> Optional[Phone]:
 
 
 async def create_call(phone: Phone, **kwargs) -> Call:
-    """Create Phone object in db."""
-    call_obj = Call(phone=phone, **kwargs)
+    """Create Call object in db with related objects eagerly loaded."""
     async with AsyncSessionLocal() as session:
+        call_obj = Call(phone=phone, **kwargs)
         session.add(call_obj)
         await session.commit()
-        await session.refresh(call_obj)
-    return call_obj
+        # Заново загружаем call с подгруженными зависимостями
+        query = (
+            select(Call)
+            .options(joinedload(Call.phone), joinedload(Call.statuses))
+            .where(Call.id == call_obj.id)
+        )
+        result = await session.scalar(query)
+        return result
 
 
 # def get_call(id: str) -> Optional[Phone]:
