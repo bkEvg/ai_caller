@@ -1,4 +1,3 @@
-from typing import Union
 from zoneinfo import ZoneInfo
 
 from pydantic_settings import BaseSettings, SettingsConfigDict

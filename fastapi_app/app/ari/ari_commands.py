@@ -162,8 +162,10 @@ class WSHandler:
                 await self.ari_client.dial_channel(channel_id)
 
             if event_type == 'Dial' and event['dialstatus'] == 'ANSWER':
-                # await self.ari_client.play_audio(self.client_channel_id)
-                pass
+                # Создаем передачу потока во внешний ресурс
+                external_media = await self.ari_client.create_external_media()
+                await self.ari_client.add_channel_to_bridge(
+                    self.current_bridge_id, external_media['id'])
 
     async def connect(self):
         """Подключаемся по WebSocket и обрабатываем события."""
@@ -182,10 +184,5 @@ class WSHandler:
 
             await self.ari_client.add_channel_to_bridge(
                 self.current_bridge_id, self.client_channel_id)
-
-            # Создаем передачу потока во внешний ресурс
-            external_media = await self.ari_client.create_external_media()
-            await self.ari_client.add_channel_to_bridge(
-                self.current_bridge_id, external_media['id'])
 
             await self.handle_events(websocket)
