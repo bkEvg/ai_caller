@@ -64,6 +64,6 @@ class PhoneResponse(BaseResponse):
 class CallResponse(BaseResponse):
     """Schema for Call model"""
 
-    channel_id: Optional[str]
+    channel_id: Optional[str] = None
     phone: PhoneResponse
     statuses: list[StatusesResponse]
