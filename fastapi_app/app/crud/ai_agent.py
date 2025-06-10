@@ -9,9 +9,12 @@ from app.core.db import AsyncSessionLocal
 
 
 async def create_call(call_data: CallCreate) -> Call:
+    """Create Call object."""
+    phone_obj = await get_phone_by_digits(call_data.phone.digits)
     async with AsyncSessionLocal() as session:
-        # Создаём Phone из вложенной схемы
-        phone_obj = Phone(digits=call_data.phone.digits)
+        if not phone_obj:
+            # Создаём Phone из вложенной схемы
+            phone_obj = Phone(digits=call_data.phone.digits)
 
         # Создаём Call
         call_obj = Call(phone=phone_obj)
@@ -79,11 +82,13 @@ async def get_call_by_id(id: str) -> Optional[Call]:
 
 
 async def get_calls_by_phone_digits(digits: int) -> List[Call]:
-    phone_obj = get_phone_by_digits(digits)
+    phone_obj = await get_phone_by_digits(digits)
     async with AsyncSessionLocal() as session:
-        query = select(Call).where(Call.phone == phone_obj)
-        result = await session.scalars(query)
-    return result.all()
+        query = select(Call).options(
+            joinedload(Call.phone), joinedload(Call.statuses)
+        ).where(Call.phone == phone_obj)
+        result = await session.execute(query)
+    return result.unique().scalars().all()
 
 
 # CallStatus

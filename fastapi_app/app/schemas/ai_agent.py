@@ -46,7 +46,7 @@ class CallDB(BaseModel):
 
 
 class CallListDB(BaseModel):
-    calls: list[CallDB]
+    calls: Optional[list[CallDB]]
 
 
 class PhoneCreate(BaseModel):
