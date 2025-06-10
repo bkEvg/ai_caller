@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 
 from app.models.ai_agent import Call, Phone, CallStatus
-from app.schemas.ai_agent import CallCreate, PhoneCreate
+from app.schemas.ai_agent import CallCreate, PhoneCreate, CallStatusCreate
 from app.core.db import AsyncSessionLocal
 
 
@@ -87,9 +87,9 @@ async def get_calls_by_phone_id(phone_id: int) -> List[Call]:
 
 # CallStatus
 
-async def create_call_status(call_id: int, status_str: str) -> CallStatus:
+async def create_call_status(call_status_data: CallStatusCreate) -> CallStatus:
     async with AsyncSessionLocal() as session:
-        status = CallStatus(call_id=call_id, status_str=status_str)
+        status = CallStatus(**call_status_data.model_dump())
         session.add(status)
         await session.commit()
         await session.refresh(status)
@@ -101,5 +101,4 @@ async def get_statuses_for_call(call_id: int) -> List[CallStatus]:
         query = select(CallStatus).where(
             CallStatus.call_id == call_id).order_by(CallStatus.created_at)
         result = await session.scalars(query)
-        statuses = result.all()
-    return statuses
+    return result.all()

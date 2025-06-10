@@ -28,6 +28,7 @@ class PhoneExamples(dict, Enum):
 
 
 class CallRequest(BaseModel):
+    """Schema"""
 
     digits: str = Field(..., min_length=11, max_length=15)
 
@@ -66,12 +67,15 @@ class PhoneDB(BaseModel):
 
 
 class CallStatusCreate(BaseModel):
+    """Schema for CallStatus creating."""
+
     status_str: str
     call_id: int
 
 
 class CallStatusDB(BaseModel):
     """Schema for CallStatus model"""
+
     status_str: str
 
     model_config = ConfigDict(from_attributes=True)
@@ -81,7 +85,7 @@ class CallDB(BaseModel):
     """Schema for Call model"""
 
     id: int
-    channel_id: Optional[str] = None
+    channel_id: Optional[str]
     phone: PhoneDB
     statuses: list[CallStatusDB]
 

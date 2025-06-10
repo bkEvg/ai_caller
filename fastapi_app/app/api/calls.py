@@ -3,8 +3,8 @@ from fastapi import APIRouter, Body
 
 from app.ari.ari_commands import AriClient, WSHandler
 from app.ari.ari_config import (ARI_HOST, AUTH_HEADER, WEBSOCKET_HOST)
-from app.schemas.ai_agent import CallRequest, CallDB, PhoneExamples, CallCreate
-from app.crud.ai_agent import get_phone_by_digits, create_call, create_phone
+from app.schemas.ai_agent import CallDB, PhoneExamples, CallCreate
+from app.crud.ai_agent import create_call
 
 calls_router = APIRouter()
 
