@@ -145,6 +145,7 @@ class WSHandler:
         self.phone = phone
         self.sip_endpoint = f'SIP/{self.phone}@{SIPUNI_HOST}'
         self.current_bridge_id = None
+        self.current_external_id = None
         self.client_channel_id = None
         self.snoop_channel_id = None
 
@@ -162,7 +163,8 @@ class WSHandler:
                 await self.ari_client.dial_channel(channel_id)
 
             if event_type == 'Dial' and event['dialstatus'] == 'ANSWER':
-                pass
+                await self.ari_client.add_channel_to_bridge(
+                    self.current_bridge_id, self.current_external_id)
 
     async def connect(self):
         """Подключаемся по WebSocket и обрабатываем события."""
@@ -184,7 +186,6 @@ class WSHandler:
 
             # Создаем передачу потока во внешний ресурс
             external_media = await self.ari_client.create_external_media()
-            await self.ari_client.add_channel_to_bridge(
-                self.current_bridge_id, external_media['id'])
+            self.current_external_id = external_media['id']
 
             await self.handle_events(websocket)
