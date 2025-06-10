@@ -14,7 +14,7 @@ from src.utils import AudioSocketParser, AudioConverter
 from src.instructions import INSTRUCTIONS
 
 logging.basicConfig(
-    level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s'
+    level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
 
@@ -192,7 +192,8 @@ class AudioWebSocketClient:
         elif event_type == "response.content_part.done":
             pass
         elif event_type == 'response.audio_transcript.done':
-            logger.info(event["delta"])
+            # logger.info(event["delta"])
+            pass
         else:
             logger.info(f"Unhandled event type: {event_type}")
 
