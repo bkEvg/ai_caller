@@ -27,6 +27,15 @@ async def get_phone(phone: PhoneRequest) -> Optional[Phone]:
     return instance
 
 
+def get_related_objs(session, id):
+    query = (
+        select(Call)
+        .options(joinedload(Call.phone), joinedload(Call.statuses))
+        .where(Call.id == id)
+    )
+    return session.scalar(query)
+
+
 async def create_call(phone: Phone, **kwargs) -> Call:
     """Create Call object in db with related objects eagerly loaded."""
     async with AsyncSessionLocal() as session:
@@ -34,12 +43,9 @@ async def create_call(phone: Phone, **kwargs) -> Call:
         session.add(call_obj)
         await session.commit()
         # Заново загружаем call с подгруженными зависимостями
-        query = (
-            select(Call)
-            .options(joinedload(Call.phone), joinedload(Call.statuses))
-            .where(Call.id == call_obj.id)
-        )
-        result = await session.scalar(query)
+        await session.refresh(call_obj)
+
+        result = await session.run_sync(get_related_objs, call_obj.id)
         return result
 
 
