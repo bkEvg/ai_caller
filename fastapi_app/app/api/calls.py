@@ -28,6 +28,6 @@ async def make_call(request: CallCreate):
 
 
 @calls_router.get('/{digits}', response_model=CallListDB)
-async def get_calls_by_phone(digits: PhoneCreate):
+async def get_calls_by_phone(digits: str):
     calls = get_calls_by_phone_digits(digits)
     return calls
