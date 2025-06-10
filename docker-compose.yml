@@ -1,18 +1,9 @@
-volumes:
-  front_static:
 
 services:
   gateway:
     build: ./gateway
-    volumes:
-      - front_static:/var/www/frontend/
     ports:
       - 5060:80
-  front:
-    build: ./front
-    command: cp -r /app/dist/. /static/
-    volumes:
-      - front_static:/static/
   fast_api:
     build: ./fastapi_app
     env_file:

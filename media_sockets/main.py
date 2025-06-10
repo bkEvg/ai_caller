@@ -191,7 +191,7 @@ class AudioWebSocketClient:
             logger.info("Speech stopped detected by server VAD")
         elif event_type == "response.content_part.done":
             pass
-        elif event_type == 'response.audio_transcript.delta':
+        elif event_type == 'response.audio_transcript.done':
             logger.info(event["delta"])
         else:
             logger.info(f"Unhandled event type: {event_type}")

@@ -33,6 +33,4 @@ async def make_call(
     call = await create_call(
         phone, channel_id=ws_handler.client_channel_id
     )
-
-    # Отправляем ответ сразу, не ожидая завершения WebSocket
     return call
