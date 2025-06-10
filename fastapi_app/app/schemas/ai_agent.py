@@ -4,7 +4,14 @@ from pydantic import (BaseModel, Field, field_validator, ValidationError,
                       ConfigDict)
 
 
-class ExamplesMixin(Enum):
+class PhoneExamples(dict, Enum):
+
+    FIRST = {
+        'digits': '79117772200'
+    }
+    WRONG = {
+        'digits': 'string'
+    }
 
     @classmethod
     def get_openapi_examples(cls):
@@ -16,15 +23,6 @@ class ExamplesMixin(Enum):
             for example in cls
         }
         return person_examples
-
-
-class PhoneExamples(dict, ExamplesMixin):
-    FIRST = {
-        'digits': '79117772200'
-    }
-    WRONG = {
-        'digits': 'string'
-    }
 
 
 class PhoneRequest(BaseModel):
