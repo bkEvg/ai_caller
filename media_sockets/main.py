@@ -178,6 +178,7 @@ class AudioWebSocketClient:
 
         elif event_type == "response.audio.delta":
             # Append audio data to buffer
+            logger.info("Часть ответа добавляется в буффер на проигрывание")
             audio_data = base64.b64decode(event["delta"])
             await self.audio_handler.enqueue_audio(audio_data)
         elif event_type == "response.done":
