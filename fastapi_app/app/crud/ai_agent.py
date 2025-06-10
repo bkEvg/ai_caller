@@ -78,9 +78,10 @@ async def get_call_by_id(id: str) -> Optional[Call]:
     return call
 
 
-async def get_calls_by_phone_id(phone_id: int) -> List[Call]:
+async def get_calls_by_phone_digits(digits: int) -> List[Call]:
+    phone_obj = get_phone_by_digits(digits)
     async with AsyncSessionLocal() as session:
-        query = select(Call).where(Call.phone_id == phone_id)
+        query = select(Call).where(Call.phone == phone_obj)
         result = await session.scalars(query)
     return result.all()
 
