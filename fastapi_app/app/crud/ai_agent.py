@@ -46,7 +46,7 @@ async def create_call(phone: Phone, **kwargs) -> Call:
         await session.refresh(call_obj)
 
         result = await session.run_sync(get_related_objs, call_obj.id)
-        return result
+    return result
 
 
 # def get_call(id: str) -> Optional[Phone]:
