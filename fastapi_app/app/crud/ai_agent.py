@@ -27,10 +27,6 @@ async def get_phone(phone: PhoneRequest) -> Optional[Phone]:
     return instance
 
 
-async def get_related_objs(session, id):
-    
-    return result
-
 
 async def create_call(phone: Phone, **kwargs) -> Call:
     """Create Call object in db with related objects eagerly loaded."""
