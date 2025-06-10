@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Optional
 
 from pydantic import (BaseModel, Field, field_validator, ValidationError,
                       ConfigDict)
@@ -63,6 +64,6 @@ class PhoneResponse(BaseResponse):
 class CallResponse(BaseResponse):
     """Schema for Call model"""
 
-    channel_id: str
+    channel_id: Optional[str]
     phone: PhoneResponse
     statuses: list[StatusesResponse]

@@ -27,7 +27,6 @@ async def get_phone(phone: PhoneRequest) -> Optional[Phone]:
     return instance
 
 
-
 async def create_call(phone: Phone, **kwargs) -> Call:
     """Create Call object in db with related objects eagerly loaded."""
     async with AsyncSessionLocal() as session:
@@ -45,11 +44,3 @@ async def create_call(phone: Phone, **kwargs) -> Call:
 
         # result = await session.run_sync(get_related_objs, call_obj.id)
     return result
-
-
-# def get_call(id: str) -> Optional[Phone]:
-#     """Get Phone instance from db."""
-#     with AsyncSessionLocal() as session:
-#         query = select(Phone).where(Phone.digits == phone.digits)
-#         instance = session.scalar(query)
-#     return instance
