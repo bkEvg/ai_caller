@@ -5,19 +5,19 @@ from pydantic import Field
 
 
 class Settings(BaseSettings):
-    db_url: str
-    ari_pass: str
-    default_timezone: str = Field('Europe/Moscow')
-    app_title: str = Field('Нейро-Ассистент')
-    app_description: str = Field('Отправляйте звонки на номера России')
+    DB_URL: str
+    ARI_PASS: str
+    DEFAULT_TIMEZONE: str = Field('Europe/Moscow')
+    APP_TITLE: str = Field('Нейро-Ассистент')
+    APP_DESCRIPTION: str = Field('Отправляйте звонки на номера России')
 
     model_config = SettingsConfigDict(
-        extra='ignore', env_file='.env', case_sensitive=False
+        extra='ignore'
     )
 
     @property
     def timezone(self):
-        return ZoneInfo(self.default_timezone)
+        return ZoneInfo(self.DEFAULT_TIMEZONE)
 
 
 settings = Settings()
