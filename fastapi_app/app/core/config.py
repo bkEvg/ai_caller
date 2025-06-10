@@ -8,6 +8,8 @@ class Settings(BaseSettings):
     ari_pass: str
     db_url: str
     default_timezone: str = Field('Europe/Moscow')
+    app_title: str = Field('Нейро-Ассистент')
+    app_description: str = Field('Отправляйте звонки на номера России')
 
     model_config = SettingsConfigDict(
         extra='ignore', env_file='.env'

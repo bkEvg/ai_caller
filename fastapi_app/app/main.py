@@ -2,8 +2,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .api.calls import calls_router
+from app.core.config import settings
 
-app = FastAPI(title='SIP Bot API')
+app = FastAPI(title=settings.app_title, description=settings.app_description)
 
 app.add_middleware(
     CORSMiddleware,

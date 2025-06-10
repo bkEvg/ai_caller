@@ -1,0 +1,41 @@
+from pydantic import (BaseModel, Field, field_validator, ValidationError,
+                      ConfigDict)
+
+
+class PhoneRequest(BaseModel):
+
+    digits: str = Field(..., min_length=11, max_length=15)
+
+    @field_validator('digits', mode='after')
+    @classmethod
+    def validate_phone(cls, value: str):
+        if not value.startswith('7'):
+            raise ValidationError('Номер должен начинаться с 7')
+
+        if not value.isnumeric():
+            raise ValidationError('Номер должен состоять только из цифр')
+        return value
+
+
+class BaseResponse(BaseModel):
+    model_config = ConfigDict(
+        from_attributes=True
+    )
+
+
+class StatusesResponse(BaseResponse):
+    """Schema for CallStatus model"""
+    status_str: str
+
+
+class PhoneResponse(BaseResponse):
+    """Schema for Phone model"""
+    digits: str
+
+
+class CallResponse(BaseResponse):
+    """Schema for Call model"""
+
+    channel_id: str
+    phone: PhoneResponse
+    statuses: list[StatusesResponse]
