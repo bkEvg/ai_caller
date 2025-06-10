@@ -54,9 +54,9 @@ async def get_phone_by_digits(digits: str) -> Optional[Phone]:
     return phone
 
 
-async def delete_phone(phone_id: int) -> None:
+async def delete_phone_by_digits(digits: str) -> None:
     async with AsyncSessionLocal() as session:
-        phone = await session.get(Phone, phone_id)
+        phone = await session.scalar(select(Phone).where(Phone.digits == digits))
         if phone:
             await session.delete(phone)
             await session.commit()
@@ -78,22 +78,11 @@ async def get_call_by_id(id: str) -> Optional[Call]:
     return call
 
 
-# async def create_call(call_data: CallCreate) -> Call:
-#     async with AsyncSessionLocal() as session:
-#         call_data = call_data.model_dump()
-#         call = Call(**call_data)
-#         session.add(call)
-#         await session.commit()
-#         await session.refresh(call)
-#     return call
-
-
 async def get_calls_by_phone_id(phone_id: int) -> List[Call]:
     async with AsyncSessionLocal() as session:
         query = select(Call).where(Call.phone_id == phone_id)
         result = await session.scalars(query)
-        calls = result.all()
-    return calls
+    return result.all()
 
 
 # CallStatus

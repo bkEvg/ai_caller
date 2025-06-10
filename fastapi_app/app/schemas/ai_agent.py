@@ -50,7 +50,7 @@ class CallCreate(BaseModel):
     """Schema for Creating Call instance."""
 
     phone: 'PhoneCreate'
-    statuses: Optional[list['CallStatusCreate']] = None
+    statuses: Optional[list['CallStatusDB']] = None
 
 
 class PhoneCreate(BaseModel):
@@ -67,6 +67,7 @@ class PhoneDB(BaseModel):
 
 class CallStatusCreate(BaseModel):
     status_str: str
+    call_id: int
 
 
 class CallStatusDB(BaseModel):
