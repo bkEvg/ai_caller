@@ -3,6 +3,7 @@ from typing import Optional
 
 from pydantic import (BaseModel, Field, field_validator, ValidationError,
                       ConfigDict)
+from app.models.ai_agent import Phone, CallStatus
 
 
 class PhoneExamples(dict, Enum):
@@ -26,7 +27,7 @@ class PhoneExamples(dict, Enum):
         return person_examples
 
 
-class PhoneRequest(BaseModel):
+class CallRequest(BaseModel):
 
     digits: str = Field(..., min_length=11, max_length=15)
 
@@ -45,29 +46,42 @@ class PhoneRequest(BaseModel):
         return value
 
 
-class BaseResponse(BaseModel):
-    pass
+class CallCreate(BaseModel):
+    """Schema for Creating Call instance."""
+
+    phone: 'PhoneCreate'
+    statuses: Optional[list['CallStatusCreate']] = None
 
 
-class StatusesResponse(BaseModel):
-    """Schema for CallStatus model"""
-    status_str: str
-
-    model_config = ConfigDict(from_attributes=True)
+class PhoneCreate(BaseModel):
+    """Schema for Phone creating."""
+    digits: str
 
 
-class PhoneResponse(BaseModel):
+class PhoneDB(BaseModel):
     """Schema for Phone model"""
     digits: str
 
     model_config = ConfigDict(from_attributes=True)
 
 
-class CallResponse(BaseModel):
+class CallStatusCreate(BaseModel):
+    status_str: str
+
+
+class CallStatusDB(BaseModel):
+    """Schema for CallStatus model"""
+    status_str: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CallDB(BaseModel):
     """Schema for Call model"""
 
+    id: int
     channel_id: Optional[str] = None
-    phone: PhoneResponse
-    statuses: list[StatusesResponse]
+    phone: PhoneDB
+    statuses: list[CallStatusDB]
 
     model_config = ConfigDict(from_attributes=True)
