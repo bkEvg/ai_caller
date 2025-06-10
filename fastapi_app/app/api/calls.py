@@ -1,16 +1,23 @@
 import asyncio
-from fastapi import APIRouter
+from fastapi import APIRouter, Body
 
 from app.ari.ari_commands import AriClient, WSHandler
 from app.ari.ari_config import (ARI_HOST, AUTH_HEADER, WEBSOCKET_HOST)
-from app.schemas.ai_agent import PhoneRequest, CallResponse
+from app.schemas.ai_agent import PhoneRequest, CallResponse, PhoneExamples
 from app.crud.ai_agent import get_phone, create_call, create_phone
 
 calls_router = APIRouter()
 
 
-@calls_router.post('', response_model=CallResponse)
-async def create_call(phone_request: PhoneRequest):
+@calls_router.post('', response_model=CallResponse,
+                   summary='Позвонить',
+                   description=("Отправить запрос на вызов "
+                                "номера Нейро Ассистентом."),
+                   tags=['Звонок'])
+async def make_call(
+        phone_request: PhoneRequest = Body(
+            ..., openapi_examples=PhoneExamples.get_openapi_examples()
+        ),):
     # Инициализация клиента и WebSocket обработчика
     ari_client = AriClient(ARI_HOST, AUTH_HEADER)
     ws_handler = WSHandler(WEBSOCKET_HOST, AUTH_HEADER, ari_client,

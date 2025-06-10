@@ -1,5 +1,30 @@
+from enum import Enum
+
 from pydantic import (BaseModel, Field, field_validator, ValidationError,
                       ConfigDict)
+
+
+class ExamplesMixin(Enum):
+
+    @classmethod
+    def get_openapi_examples(cls):
+        person_examples = {
+            example.name.lower(): {
+                'summary': f"{example.name.title()} example",
+                'value': example
+            }
+            for example in cls
+        }
+        return person_examples
+
+
+class PhoneExamples(dict, ExamplesMixin):
+    FIRST = {
+        'digits': '79117772200'
+    }
+    WRONG = {
+        'digits': 'string'
+    }
 
 
 class PhoneRequest(BaseModel):
