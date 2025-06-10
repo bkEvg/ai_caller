@@ -30,10 +30,8 @@ class PhoneRequest(BaseModel):
     digits: str = Field(..., min_length=11, max_length=15)
 
     model_config = ConfigDict(
-        title="Класс для приветствия", str_min_length=2,
-        json_schema_extra={
-            'examples': [example for example in PhoneExamples]
-        })
+        title="Класс для звонка",
+    )
 
     @field_validator('digits', mode='after')
     @classmethod
