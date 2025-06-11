@@ -15,12 +15,12 @@ calls_router = APIRouter()
     description="Отправить запрос на вызов номера Нейро Ассистентом.")
 async def make_call(request: CallCreate):
     # Инициализация клиента и WebSocket обработчика
-    # ari_client = AriClient(ARI_HOST, AUTH_HEADER)
-    # ws_handler = WSHandler(WEBSOCKET_HOST, AUTH_HEADER, ari_client,
-    #                        request.phone.digits)
+    ari_client = AriClient(ARI_HOST, AUTH_HEADER)
+    ws_handler = WSHandler(WEBSOCKET_HOST, AUTH_HEADER, ari_client,
+                           request.phone.digits)
 
-    # # Подключаемся и начинаем слушать события
-    # asyncio.create_task(ws_handler.connect())
+    # Подключаемся и начинаем слушать события
+    asyncio.create_task(ws_handler.connect())
 
     # Создаем в базе обьект звонка телефона
     call = await create_call(request)
