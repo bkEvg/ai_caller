@@ -163,14 +163,14 @@ class WSHandler:
                 channel_id = event['channel']['id']
                 await asyncio.sleep(2)
                 await append_status_to_call(
-                    channel_id,
+                    self.client_channel_id,
                     [CallStatusDB(status_str=CallStatuses.STASIS_START)])
                 await self.ari_client.dial_channel(channel_id)
 
             if event_type == 'Dial' and event['dialstatus'] == 'ANSWER':
-                # await append_status_to_call(
-                #     channel_id,
-                #     [CallStatusDB(status_str=CallStatuses.ANSWERED)])
+                await append_status_to_call(
+                    self.client_channel_id,
+                    [CallStatusDB(status_str=CallStatuses.ANSWERED)])
                 # Создаем передачу потока во внешний ресурс
                 await self.ari_client.add_channel_to_bridge(
                     self.current_bridge_id, self.current_external_id)
