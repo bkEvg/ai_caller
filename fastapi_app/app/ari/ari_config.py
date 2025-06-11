@@ -8,7 +8,8 @@ load_dotenv()
 HOST = '31.129.35.221:8088'
 EXTERNAL_HOST = '217.114.9.31:7575'
 ARI_HOST = f"http://{HOST}/ari"
-SIPUNI_HOST = 'terraai-test-sipuni'
+# SIPUNI_HOST = 'terraai-test-sipuni'
+SIPUNI_HOST = 'terraai-test'
 ARI_USER = "terra-user-01"
 ARI_PASSWORD = os.environ.get('ARI_PASS')
 STASIS_APP_NAME = 'fast_api'
