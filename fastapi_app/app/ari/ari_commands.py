@@ -160,6 +160,7 @@ class WSHandler:
             event_type = event['type']
             logger.error(event_type)
             if event_type == 'StasisStart':
+                logger.info('Приложение получило доступ к управлению')
                 channel_id = event['channel']['id']
                 await asyncio.sleep(2)
                 await append_status_to_call(
@@ -168,6 +169,7 @@ class WSHandler:
                 await self.ari_client.dial_channel(channel_id)
 
             if event_type == 'Dial' and event['dialstatus'] == 'ANSWER':
+                logger.info('Абонент ответил')
                 await self.ari_client.add_channel_to_bridge(
                     self.current_bridge_id, self.current_external_id)
                 await append_status_to_call(
