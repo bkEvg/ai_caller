@@ -22,3 +22,4 @@ base64_auth = base64.b64encode(auth_bytes).decode('utf-8')
 AUTH_HEADER = {
     'Authorization': f'Basic {base64_auth}'
 }
+
