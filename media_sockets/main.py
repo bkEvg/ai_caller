@@ -193,8 +193,7 @@ class AudioWebSocketClient:
         elif event_type == "response.content_part.done":
             pass
         elif event_type == 'response.audio_transcript.done':
-            # logger.info(event["delta"])
-            pass
+            logger.info(event["delta"])
         else:
             logger.info(f"Unhandled event type: {event_type}")
 
