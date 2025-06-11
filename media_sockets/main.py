@@ -60,6 +60,7 @@ class AudioHandler:
             self.audio_queue.task_done()
 
     async def stop_playback(self):
+        await asyncio.sleep(0.5)
         self.stop_playback_flag = True
         self.clear_audio_queue()
         if self.playback_task and not self.playback_task.done():
