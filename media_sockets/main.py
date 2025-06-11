@@ -47,11 +47,11 @@ class AudioHandler:
             except Exception as e:
                 logger.error(f"Ошибка при воспроизведении: {e}")
 
-    async def enqueue_audio(self, audio_data):
+    async def enqueue_audio(self, audio_data, writer):
         await self.audio_queue.put(audio_data)
         if self.playback_task is None or self.playback_task.done():
             logger.info("🔁 Перезапуск воспроизведения")
-            await self.start_playback_loop(self.writer)
+            await self.start_playback_loop(writer)
 
     def clear_audio_queue(self):
         while not self.audio_queue.empty():
@@ -203,7 +203,7 @@ class AudioWebSocketClient:
             # Append audio data to buffer
             logger.info("Часть ответа добавляется в буффер на проигрывание")
             audio_data = base64.b64decode(event["delta"])
-            await self.audio_handler.enqueue_audio(audio_data)
+            await self.audio_handler.enqueue_audio(audio_data, self.writer)
         elif event_type == "response.done":
             logger.info("Response generation completed")
         elif event_type == "conversation.item.created":
