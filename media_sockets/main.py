@@ -5,7 +5,6 @@ import base64
 import logging
 import ssl
 import time
-import uuid
 
 from src.constants import (OPENAI_API_KEY, REALTIME_MODEL, HOST, PORT,
                            OUTPUT_FORMAT, INPUT_FORMAT, DEFAULT_SAMPLE_RATE,
@@ -22,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 class AudioHandler:
     """
-    Handles audio input and output using PyAudio.
+    Handles audio input and output.
     """
     def __init__(self):
         self.audio_buffer = b''
@@ -41,11 +40,12 @@ class AudioHandler:
         while not self.stop_playback_flag:
             try:
                 audio_data = await self.audio_queue.get()
-                await self.play_audio(audio_data, writer)
+                try:
+                    await self.play_audio(audio_data, writer)
+                finally:
+                    self.audio_queue.task_done()
             except Exception as e:
                 logger.error(f"Ошибка при воспроизведении: {e}")
-            finally:
-                self.audio_queue.task_done()
 
     async def enqueue_audio(self, audio_data):
         await self.audio_queue.put(audio_data)
