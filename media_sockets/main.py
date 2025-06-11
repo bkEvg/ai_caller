@@ -15,7 +15,7 @@ from src.utils import AudioSocketParser, AudioConverter
 from src.instructions import INSTRUCTIONS
 
 logging.basicConfig(
-    level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
 
@@ -227,8 +227,7 @@ class AudioWebSocketClient:
                             "audio": base64_data
                         })
                     elif packet_type == 0x01:
-                        stream_uuid = uuid.UUID(bytes=payload)
-                        logger.info(f"Получен UUID потока: {stream_uuid}")
+                        logger.info(f"Получен UUID потока: {payload}")
                     else:
                         logger.warning(f"Получен не голосовой пакет. Тип: {hex(packet_type)}, длина: {packet_length}")
                 else:
