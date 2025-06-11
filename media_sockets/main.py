@@ -23,35 +23,36 @@ class AudioHandler:
     """
     Handles audio input and output.
     """
-    def __init__(self):
+    def __init__(self, writer):
         self.audio_buffer = b''
 
         self.is_running = False
         self.audio_queue = asyncio.Queue()
         self.playback_task = None
         self.stop_playback_flag = False
+        self.writer = writer
 
-    async def start_playback_loop(self, writer):
+    async def start_playback_loop(self):
         if self.playback_task is None or self.playback_task.done():
             self.stop_playback_flag = False
-            self.playback_task = asyncio.create_task(self._playback_loop(writer))
+            self.playback_task = asyncio.create_task(self._playback_loop())
 
-    async def _playback_loop(self, writer):
+    async def _playback_loop(self):
         while not self.stop_playback_flag:
             try:
                 audio_data = await self.audio_queue.get()
                 try:
-                    await self.play_audio(audio_data, writer)
+                    await self.play_audio(audio_data)
                 finally:
                     self.audio_queue.task_done()
             except Exception as e:
                 logger.error(f"Ошибка при воспроизведении: {e}")
 
-    async def enqueue_audio(self, audio_data, writer):
+    async def enqueue_audio(self, audio_data):
         await self.audio_queue.put(audio_data)
         if self.playback_task is None or self.playback_task.done():
             logger.info("🔁 Перезапуск воспроизведения")
-            await self.start_playback_loop(writer)
+            await self.start_playback_loop()
 
     def clear_audio_queue(self):
         while not self.audio_queue.empty():
@@ -68,8 +69,7 @@ class AudioHandler:
             except asyncio.CancelledError:
                 logger.info("Проигрывание было отменено")
 
-    @staticmethod
-    async def play_audio(audio_data, writer):
+    async def play_audio(self, audio_data):
         logger.info(f"▶️ Старт воспроизведения: {len(audio_data)} байт")
         start = time.time()
         audio_data = AudioConverter.resample_audio(
@@ -84,8 +84,8 @@ class AudioHandler:
                 audio_data[chunk:chunk + chunk_size]
             )
             if chunk_data:
-                writer.write(chunk_data)
-                await writer.drain()
+                self.writer.write(chunk_data)
+                await self.writer.drain()
                 await asyncio.sleep(pause)
         duration = time.time() - start
         logger.info(f"✅ Воспроизведение завершено, длина: {duration:.2f} сек")
@@ -103,7 +103,7 @@ class AudioWebSocketClient:
         self.model = REALTIME_MODEL
         self.api_key = OPENAI_API_KEY
         self.ws = None
-        self.audio_handler = AudioHandler()
+        self.audio_handler = AudioHandler(self.writer)
 
         self.ssl_context = ssl.create_default_context()
         self.ssl_context.check_hostname = False
@@ -203,7 +203,7 @@ class AudioWebSocketClient:
             # Append audio data to buffer
             logger.info("Часть ответа добавляется в буффер на проигрывание")
             audio_data = base64.b64decode(event["delta"])
-            await self.audio_handler.enqueue_audio(audio_data, self.writer)
+            await self.audio_handler.enqueue_audio(audio_data)
         elif event_type == "response.done":
             logger.info("Response generation completed")
         elif event_type == "conversation.item.created":
@@ -226,7 +226,7 @@ class AudioWebSocketClient:
 
         # Start playing data from Queue
         asyncio.create_task(
-            self.audio_handler.start_playback_loop(self.writer)
+            self.audio_handler.start_playback_loop()
         )
 
         # Start receiving events in the background
