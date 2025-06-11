@@ -169,7 +169,7 @@ class WSHandler:
 
             if event_type == 'Dial' and event['dialstatus'] == 'ANSWER':
                 await self.ari_client.add_channel_to_bridge(
-                    self.current_bridge_id, self.client_channel_id)
+                    self.current_bridge_id, self.current_external_id)
                 await append_status_to_call(
                     self.client_channel_id,
                     [CallStatusDB(status_str=CallStatuses.ANSWERED)])
@@ -205,6 +205,6 @@ class WSHandler:
             self.current_external_id = external_media['id']
             # Создаем передачу потока во внешний ресурс
             await self.ari_client.add_channel_to_bridge(
-                self.current_bridge_id, external_media['id'])
+                self.current_bridge_id, self.client_channel_id)
 
             await self.handle_events(websocket)
