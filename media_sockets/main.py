@@ -71,8 +71,6 @@ class AudioHandler:
                 logger.info("Проигрывание было отменено")
 
     async def play_audio(self, audio_data):
-        logger.info(f"▶️ Старт воспроизведения: {len(audio_data)} байт")
-        start = time.time()
         audio_data = AudioConverter.resample_audio(
             audio_data, OPENAI_OUTPUT_RATE, DEFAULT_SAMPLE_RATE
         )
@@ -88,8 +86,6 @@ class AudioHandler:
                 self.writer.write(chunk_data)
                 await self.writer.drain()
                 await asyncio.sleep(pause)
-        duration = time.time() - start
-        logger.info(f"✅ Воспроизведение завершено, длина: {duration:.2f} сек")
 
 
 class AudioWebSocketClient:
@@ -219,9 +215,10 @@ class AudioWebSocketClient:
             logger.info("Speech stopped detected by server VAD")
         elif event_type == "response.audio_transcript.delta":
             ai_response_buffer += event["delta"]
+            logger.info(event["delta"], type(event["delta"]))
         elif event_type == 'response.audio_transcript.done':
             logger.info(f"Модель: {ai_response_buffer}")
-            ai_response_buffer = ''
+            # ai_response_buffer = ''
         elif event_type == 'conversation.item.input_audio_transcription.delta':
             logger.info(f"Пользователь: {event['delta']}")
         else:
