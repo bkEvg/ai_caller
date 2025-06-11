@@ -110,6 +110,8 @@ class AudioWebSocketClient:
         self.instructions = instructions
         self.voice = voice
 
+        self.ai_response_buffer = ''
+
         # VAD mode (set to null to disable)
         self.VAD_turn_detection = True
         self.VAD_config = {
@@ -214,11 +216,11 @@ class AudioWebSocketClient:
         elif event_type == "input_audio_buffer.speech_stopped":
             logger.info("Speech stopped detected by server VAD")
         elif event_type == "response.audio_transcript.delta":
-            ai_response_buffer += event["delta"]
-            logger.info(event["delta"], type(event["delta"]))
+            self.ai_response_buffer += event["delta"]
+            logger.info(event["delta"])
         elif event_type == 'response.audio_transcript.done':
             logger.info(f"Модель: {ai_response_buffer}")
-            # ai_response_buffer = ''
+            self.ai_response_buffer = ''
         elif event_type == 'conversation.item.input_audio_transcription.delta':
             logger.info(f"Пользователь: {event['delta']}")
         else:
