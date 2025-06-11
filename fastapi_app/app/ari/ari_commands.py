@@ -7,6 +7,8 @@ import json
 import logging
 
 from .ari_config import (ARI_HOST, STASIS_APP_NAME, EXTERNAL_HOST, SIPUNI_HOST)
+from app.crud.ai_agent import create_call, create_call_status
+from app.schemas.ai_agent import CallCreate, PhoneCreate, CallStatusCreate, CallStatuses
 
 logger = logging.getLogger(__name__)
 
@@ -180,6 +182,14 @@ class WSHandler:
             # Создаем канал для вызова
             client = await self.ari_client.create_channel(self.sip_endpoint)
             self.client_channel_id = client['id']
+
+            # Создаем в базе обьект звонка телефона
+            phone_data = PhoneCreate(self.phone)
+            call_data = CallCreate(channel_id=self.client_channel_id,
+                                   phone=phone_data,
+                                   statuses=[CallStatuses.CREATED])
+            call = await create_call(call_data)
+
             logger.error(f'CLIENT_CHANNEL_ID: {self.client_channel_id}')
 
             external_media = await self.ari_client.create_external_media()

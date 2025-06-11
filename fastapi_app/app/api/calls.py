@@ -10,7 +10,7 @@ calls_router = APIRouter()
 
 
 @calls_router.post(
-    '/', response_model=CallDB,
+    '/',
     summary='Позвонить', tags=['Звонок'],
     description="Отправить запрос на вызов номера Нейро Ассистентом.")
 async def make_call(request: CallCreate):
@@ -21,10 +21,7 @@ async def make_call(request: CallCreate):
 
     # Подключаемся и начинаем слушать события
     asyncio.create_task(ws_handler.connect())
-
-    # Создаем в базе обьект звонка телефона
-    call = await create_call(request)
-    return call
+    return 'created'
 
 
 @calls_router.get('/{digits}', response_model=list[CallDB],

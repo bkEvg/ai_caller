@@ -31,6 +31,7 @@ class PhoneExamples(dict, Enum):
 
 
 class CallStatuses(str, Enum):
+    CREATED = 'CallCreated'
     STASIS_START = 'StasisStart'
     STASIS_END = 'StasisEnd'
     DIAL = 'Dial'
@@ -46,6 +47,7 @@ class CallStatuses(str, Enum):
 class CallCreate(BaseModel):
     """Schema for Creating Call instance."""
 
+    channel_id: str
     phone: 'PhoneCreate'
     statuses: Optional[list['CallStatusDB']] = None
 
@@ -87,7 +89,7 @@ class PhoneDB(BaseModel):
 class CallStatusCreate(BaseModel):
     """Schema for CallStatus creating."""
 
-    status_str: str
+    status_str: CallStatuses
     call_id: int
 
 
