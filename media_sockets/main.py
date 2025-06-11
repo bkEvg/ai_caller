@@ -250,7 +250,9 @@ class AudioWebSocketClient:
                     elif packet_type == 0x01:
                         logger.info(f"Получен UUID потока: {payload}")
                     else:
-                        logger.warning(f"Получен не голосовой пакет. Тип: {hex(packet_type)}, длина: {packet_length}")
+                        logger.warning(
+                            "Получен не голосовой пакет. "
+                            f"Тип: {hex(packet_type)}, длина: {packet_length}")
                 else:
                     logger.error('No data from external media')
 
