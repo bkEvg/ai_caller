@@ -225,6 +225,8 @@ class AudioWebSocketClient:
                         "type": "input_audio_buffer.append",
                         "audio": base64_data
                     })
+                else:
+                    logger.error('No data from external media')
 
         except Exception as e:
             logger.error(f"Error in audio socket communication: {e}")
