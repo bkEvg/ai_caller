@@ -32,6 +32,7 @@ class PhoneExamples(dict, Enum):
 
 class CallStatuses(str, Enum):
     CREATED = 'CallCreated'
+    ANSWERED = 'CallAnswered'
     STASIS_START = 'StasisStart'
     STASIS_END = 'StasisEnd'
     DIAL = 'Dial'

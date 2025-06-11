@@ -4,7 +4,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 
 from app.models.ai_agent import Call, Phone, CallStatus
-from app.schemas.ai_agent import CallCreate, PhoneCreate, CallStatusCreate
+from app.schemas.ai_agent import (CallCreate, PhoneCreate, CallStatusCreate,
+                                  CallStatusDB)
 from app.core.db import AsyncSessionLocal
 
 
@@ -14,7 +15,8 @@ async def create_call(call_data: CallCreate) -> Call:
     async with AsyncSessionLocal() as session:
         if not phone_obj:
             # Создаём Phone из вложенной схемы
-            phone_obj = Phone(digits=call_data.phone.digits)
+            phone_obj = Phone(digits=call_data.phone.digits,
+                              channel_id=call_data.channel_id)
 
         # Создаём Call
         call_obj = Call(phone=phone_obj)
@@ -100,6 +102,23 @@ async def create_call_status(call_status_data: CallStatusCreate) -> CallStatus:
         await session.commit()
         await session.refresh(status)
     return status
+
+
+async def append_status_to_call(channel_id: str, statuses: list[CallStatusDB]) -> Call:
+    async with AsyncSessionLocal() as session:
+        query = select(Call).where(Call.channel_id == channel_id)
+        call: Call = await session.scalar(query)
+        if not call:
+            raise ValueError(f'Звонок с channel_id={channel_id} не найден.')
+        new_statuses = [
+            CallStatus(call_id=call.id, **status.model_dump())
+            for status in statuses
+        ]
+        call.statuses.extend(new_statuses)
+        session.add(call)
+        await session.commit()
+        await session.refresh(call)
+    return call
 
 
 async def get_statuses_for_call(call_id: int) -> List[CallStatus]:

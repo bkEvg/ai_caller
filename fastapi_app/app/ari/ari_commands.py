@@ -7,7 +7,7 @@ import json
 import logging
 
 from .ari_config import (ARI_HOST, STASIS_APP_NAME, EXTERNAL_HOST, SIPUNI_HOST)
-from app.crud.ai_agent import create_call, create_call_status
+from app.crud.ai_agent import create_call, append_status_to_call
 from app.schemas.ai_agent import CallCreate, PhoneCreate, CallStatusDB, CallStatuses
 
 logger = logging.getLogger(__name__)
@@ -162,9 +162,15 @@ class WSHandler:
             if event_type == 'StasisStart':
                 channel_id = event['channel']['id']
                 await asyncio.sleep(2)
+                await append_status_to_call(
+                    channel_id,
+                    [CallStatusDB(status_str=CallStatuses.STASIS_START)])
                 await self.ari_client.dial_channel(channel_id)
 
             if event_type == 'Dial' and event['dialstatus'] == 'ANSWER':
+                await append_status_to_call(
+                    channel_id,
+                    [CallStatusDB(status_str=CallStatuses.ANSWERED)])
                 # Создаем передачу потока во внешний ресурс
                 await self.ari_client.add_channel_to_bridge(
                     self.current_bridge_id, self.current_external_id)
