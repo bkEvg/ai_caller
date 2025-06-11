@@ -3,34 +3,82 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Отправка номера телефона</title>
+  <title>Форма отправки номера</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .container {
+      background: white;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    input[type="tel"] {
+      padding: 0.5rem;
+      font-size: 1rem;
+      width: 200px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      margin-bottom: 1rem;
+    }
+
+    button {
+      padding: 0.5rem 1.5rem;
+      font-size: 1rem;
+      color: white;
+      background-color: #007bff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    #response {
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      color: #333;
+    }
+  </style>
 </head>
 <body>
-  <h1>Введите номер телефона</h1>
-  <form id="phoneForm">
-    <label for="phone">Номер телефона:</label>
-    <input type="tel" id="phone" name="phone" required />
-    <button type="submit">Отправить</button>
-  </form>
-
-  <p id="response"></p>
+  <div class="container">
+    <h2>Введите номер телефона</h2>
+    <form id="phoneForm">
+      <input type="tel" id="phone" name="digits" placeholder="+7..." required />
+      <br />
+      <button type="submit">Отправить</button>
+    </form>
+    <p id="response"></p>
+  </div>
 
   <script>
     document.getElementById('phoneForm').addEventListener('submit', async function (e) {
       e.preventDefault();
 
       const phone = document.getElementById('phone').value;
-
       const responseElement = document.getElementById('response');
       responseElement.textContent = 'Отправка...';
 
       try {
-        const response = await fetch('http://217.114.9.31:4040/api/v1/calls/', {
+        const response = await fetch('/api/send-phone', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ phone })
+          body: JSON.stringify({ digits: phone })
         });
 
         const result = await response.json();
