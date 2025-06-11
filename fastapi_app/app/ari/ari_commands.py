@@ -184,7 +184,7 @@ class WSHandler:
             self.client_channel_id = client['id']
 
             # Создаем в базе обьект звонка телефона
-            phone_data = PhoneCreate(self.phone)
+            phone_data = PhoneCreate(digits=self.phone)
             call_data = CallCreate(channel_id=self.client_channel_id,
                                    phone=phone_data,
                                    statuses=[CallStatuses.CREATED])
