@@ -15,11 +15,10 @@ async def create_call(call_data: CallCreate) -> Call:
     async with AsyncSessionLocal() as session:
         if not phone_obj:
             # Создаём Phone из вложенной схемы
-            phone_obj = Phone(digits=call_data.phone.digits,
-                              channel_id=call_data.channel_id)
+            phone_obj = Phone(digits=call_data.phone.digits)
 
         # Создаём Call
-        call_obj = Call(phone=phone_obj)
+        call_obj = Call(phone=phone_obj, channel_id=call_data.channel_id)
 
         # Создаём CallStatus объекты, если есть
         if call_data.statuses:
