@@ -214,8 +214,8 @@ class AudioWebSocketClient:
             await self.audio_handler.stop_playback()
         elif event_type == "input_audio_buffer.speech_stopped":
             logger.info("Speech stopped detected by server VAD")
-        elif event_type == "response.content_part.done":
-            pass
+        elif event_type == "response.audio_transcript.delta":
+            logger.info(event["delta"])
         else:
             logger.info(f"Unhandled event type: {event_type}")
 
