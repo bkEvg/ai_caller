@@ -187,6 +187,7 @@ class WSHandler:
             logger.info(f'BRIDGE: {self.current_bridge_id}')
 
             # Создаем канал для вызова
+            logger.error(f'SIP_ENDPOINT: {self.sip_endpoint}')
             client = await self.ari_client.create_channel(self.sip_endpoint)
             self.client_channel_id = client['id']
 
