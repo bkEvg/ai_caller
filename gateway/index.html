@@ -73,7 +73,7 @@
       responseElement.textContent = 'Отправка...';
 
       try {
-        const response = await fetch('/api/send-phone', {
+        const response = await fetch('/api/v1/calls/', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
