@@ -246,19 +246,21 @@ class AudioWebSocketClient:
                 data = await self.reader.read(READER_BYTES_LIMIT)
                 if data:
                     parser.buffer.extend(data)
-                    packet_type, packet_length, payload = parser.parse_packet()
-                    if packet_type == 0x10:
-                        base64_data = base64.b64encode(payload).decode('utf-8')
-                        await self.send_event({
-                            "type": "input_audio_buffer.append",
-                            "audio": base64_data
-                        })
-                    elif packet_type == 0x01:
-                        logger.info(f"Получен UUID потока: {payload}")
-                    else:
-                        logger.warning(
-                            "Получен не голосовой пакет. "
-                            f"Тип: {hex(packet_type)}, длина: {packet_length}")
+                    parse_result = parser.parse_packet()
+                    if parse_result:
+                        packet_type, packet_length, payload = parse_result
+                        if packet_type == 0x10:
+                            base64_data = base64.b64encode(payload).decode('utf-8')
+                            await self.send_event({
+                                "type": "input_audio_buffer.append",
+                                "audio": base64_data
+                            })
+                        elif packet_type == 0x01:
+                            logger.info(f"Получен UUID потока: {payload}")
+                        else:
+                            logger.warning(
+                                "Получен не голосовой пакет. "
+                                f"Тип: {hex(packet_type)}, длина: {packet_length}")
                 else:
                     logger.error('No data from external media')
 
