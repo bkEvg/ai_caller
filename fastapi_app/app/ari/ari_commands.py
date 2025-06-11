@@ -203,6 +203,6 @@ class WSHandler:
             # Создаем передачу потока во внешний ресурс
             response = await self.ari_client.add_channel_to_bridge(
                 self.current_bridge_id, external_media['id'])
-            logger.error(f'EXTERNAL_MEDIA_ID: {external_media['id']} - {response}')
+            logger.error(f"EXTERNAL_MEDIA_ID: {external_media['id']} - {response}")
 
             await self.handle_events(websocket)
