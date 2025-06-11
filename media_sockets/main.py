@@ -49,6 +49,9 @@ class AudioHandler:
 
     async def enqueue_audio(self, audio_data):
         await self.audio_queue.put(audio_data)
+        if self.playback_task is None or self.playback_task.done():
+            logger.info("🔁 Перезапуск воспроизведения")
+            await self.start_playback_loop(self.writer)
 
     def clear_audio_queue(self):
         while not self.audio_queue.empty():
