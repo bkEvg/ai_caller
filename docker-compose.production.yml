@@ -1,4 +1,5 @@
-
+volumes:
+  postgres_data:
 services:
   gateway:
     image: bkevg/ai_caller-gateway:latest
@@ -8,9 +9,20 @@ services:
     image: bkevg/ai_caller-backend:latest
     env_file:
       - ./.env
+    depends_on:
+      - postgres
   audiosocket:
     image: bkevg/ai_caller-audio_socket:latest
     env_file:
       - ./.env
     ports:
       - '7575:7575'
+  postgres:
+    image: postgres:17
+    env_file:
+      - ./.env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+

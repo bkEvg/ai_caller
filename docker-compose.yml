@@ -1,4 +1,5 @@
-
+volumes:
+  postgres_data:
 services:
   gateway:
     build: ./gateway
@@ -10,9 +11,19 @@ services:
       - ./.env
     ports:
       - '9000:9000'
+    depends_on:
+      - postgres
   audiosocket:
     build: ./media_sockets
     env_file:
       - ./.env
     ports:
       - '7575:7575'
+  postgres:
+    image: postgres:17
+    env_file:
+      - ./.env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"

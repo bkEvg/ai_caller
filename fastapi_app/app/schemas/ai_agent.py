@@ -9,7 +9,10 @@ from app.models.ai_agent import Phone, CallStatus
 class PhoneExamples(dict, Enum):
 
     FIRST = {
-        'digits': '79117772200'
+        "phone": {
+            "digits": "79232391892"
+        },
+        "statuses": None
     }
     WRONG = {
         'digits': 'string'
@@ -25,6 +28,19 @@ class PhoneExamples(dict, Enum):
             for example in cls
         }
         return person_examples
+
+
+class CallStatuses(str, Enum):
+    STASIS_START = 'StasisStart'
+    STASIS_END = 'StasisEnd'
+    DIAL = 'Dial'
+    CHANNEL_VARSET = 'ChannelVarset'
+    CHANNEL_HANDUP = 'ChannelHangupRequest'
+    CHANNEL_DESTROYED = 'ChannelDestroyed'
+    CHANNEL_STATE_CHANGE = 'ChannelStateChange'
+    CHANNEL_LEFT_BRIDGE = 'ChannelLeftBridge'
+    CHANNEL_ENTERED_BRIDGE = 'ChannelEnteredBridge'
+    CHANNEL_DIALPLAN = 'ChannelDialplan'
 
 
 class CallCreate(BaseModel):
@@ -45,13 +61,20 @@ class CallDB(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class CallListDB(BaseModel):
-    calls: Optional[list[CallDB]]
-
-
 class PhoneCreate(BaseModel):
     """Schema for Phone creating."""
     digits: str
+
+    @field_validator('digits', mode='after')
+    @classmethod
+    def validate_digits(cls, value: str):
+        if not value.isnumeric():
+            raise ValueError('Номер должен состоять из цифр')
+        if not value.startswith('7'):
+            raise ValueError(
+                'Разрешены вызовы только на Российские номера'
+            )
+        return value
 
 
 class PhoneDB(BaseModel):
@@ -71,6 +94,6 @@ class CallStatusCreate(BaseModel):
 class CallStatusDB(BaseModel):
     """Schema for CallStatus model"""
 
-    status_str: str
+    status_str: CallStatuses
 
     model_config = ConfigDict(from_attributes=True)
