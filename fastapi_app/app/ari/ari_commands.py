@@ -195,6 +195,7 @@ class WSHandler:
             call = await create_call(call_data)
 
             logger.error(f'CLIENT_CHANNEL_ID: {self.client_channel_id}')
+            logger.error(f'BRIDGE_ID: {self.current_bridge_id}')
 
             external_media = await self.ari_client.create_external_media()
 
