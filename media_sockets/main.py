@@ -29,22 +29,41 @@ class AudioHandler:
 
         self.is_running = False
         self.audio_queue = asyncio.Queue()
+        self.playback_task = None
+        self.stop_playback_flag = False
 
     async def start_playback_loop(self, writer):
-        if self.is_running:
-            return  # уже запущено
+        if self.playback_task is None or self.playback_task.done():
+            self.stop_playback_flag = False
+            self.playback_task = asyncio.create_task(self._playback_loop(writer))
 
-        self.is_running = True
-        while True:
-            audio_data = await self.audio_queue.get()
+    async def _playback_loop(self, writer):
+        while not self.stop_playback_flag:
             try:
+                audio_data = await self.audio_queue.get()
                 await self.play_audio(audio_data, writer)
             except Exception as e:
                 logger.error(f"Ошибка при воспроизведении: {e}")
-            self.audio_queue.task_done()
+            finally:
+                self.audio_queue.task_done()
 
     async def enqueue_audio(self, audio_data):
         await self.audio_queue.put(audio_data)
+
+    def clear_audio_queue(self):
+        while not self.audio_queue.empty():
+            self.audio_queue.get_nowait()
+            self.audio_queue.task_done()
+
+    async def stop_playback(self):
+        self.stop_playback_flag = True
+        self.clear_audio_queue()
+        if self.playback_task and not self.playback_task.done():
+            self.playback_task.cancel()
+            try:
+                await self.playback_task
+            except asyncio.CancelledError:
+                logger.info("Проигрывание было отменено")
 
     @staticmethod
     async def play_audio(audio_data, writer):
@@ -187,13 +206,12 @@ class AudioWebSocketClient:
         elif event_type == "conversation.item.created":
             logger.info(f"Conversation item created: {event.get('item')}")
         elif event_type == "input_audio_buffer.speech_started":
-            logger.info("Speech started detected by server VAD")
+            logger.info("📢 Пользователь начал говорить — прерываем ответ")
+            await self.audio_handler.stop_playback()
         elif event_type == "input_audio_buffer.speech_stopped":
             logger.info("Speech stopped detected by server VAD")
         elif event_type == "response.content_part.done":
             pass
-        elif event_type == 'response.audio_transcript.done':
-            logger.info(event["delta"])
         else:
             logger.info(f"Unhandled event type: {event_type}")
 
