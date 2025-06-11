@@ -219,12 +219,14 @@ class AudioWebSocketClient:
                 if data:
                     parser.buffer.extend(data)
                     packet_type, packet_length, payload = parser.parse_packet()
-                    base64_data = base64.b64encode(payload).decode('utf-8')
-                    logger.info(f"Отправляю {packet_length} байтов в GPT {packet_type}")
-                    await self.send_event({
-                        "type": "input_audio_buffer.append",
-                        "audio": base64_data
-                    })
+                    if packet_type == 0x10:
+                        base64_data = base64.b64encode(payload).decode('utf-8')
+                        await self.send_event({
+                            "type": "input_audio_buffer.append",
+                            "audio": base64_data
+                        })
+                    else:
+                        logger.warning(f"Получен не голосовой пакет. Тип: {hex(packet_type)}, длина: {packet_length}")
                 else:
                     logger.error('No data from external media')
 
