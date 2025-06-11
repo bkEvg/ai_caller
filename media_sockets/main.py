@@ -188,7 +188,6 @@ class AudioWebSocketClient:
         """
         Handle incoming events from the WebSocket server.
         """
-        ai_response_buffer = ''
         event_type = event.get("type")
         logger.debug(f"Received event type: {event_type}")
 
@@ -217,9 +216,8 @@ class AudioWebSocketClient:
             logger.info("Speech stopped detected by server VAD")
         elif event_type == "response.audio_transcript.delta":
             self.ai_response_buffer += event["delta"]
-            logger.info(event["delta"])
         elif event_type == 'response.audio_transcript.done':
-            logger.info(f"Модель: {ai_response_buffer}")
+            logger.info(f"Модель: {self.ai_response_buffer}")
             self.ai_response_buffer = ''
         elif event_type == 'conversation.item.input_audio_transcription.delta':
             logger.info(f"Пользователь: {event['delta']}")
