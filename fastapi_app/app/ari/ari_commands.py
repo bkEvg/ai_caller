@@ -198,9 +198,7 @@ class WSHandler:
 
             external_media = await self.ari_client.create_external_media()
 
-            logger.error(f'EXTERNAL_MEDIA_ID: {self.current_external_id}')
-            if not external_media:
-                raise ValueError(f'Ошибка при создании external_media {external_media}')
+            logger.error(f'EXTERNAL_MEDIA_ID: {external_media}')
             self.current_external_id = external_media['id']
             # Создаем передачу потока во внешний ресурс
             await self.ari_client.add_channel_to_bridge(
