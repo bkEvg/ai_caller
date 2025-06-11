@@ -5,6 +5,7 @@ import base64
 import logging
 import ssl
 import time
+import uuid
 
 from src.constants import (OPENAI_API_KEY, REALTIME_MODEL, HOST, PORT,
                            OUTPUT_FORMAT, INPUT_FORMAT, DEFAULT_SAMPLE_RATE,
@@ -225,6 +226,9 @@ class AudioWebSocketClient:
                             "type": "input_audio_buffer.append",
                             "audio": base64_data
                         })
+                    elif packet_type == 0x01:
+                        stream_uuid = uuid.UUID(bytes=payload)
+                        logger.info(f"Получен UUID потока: {stream_uuid}")
                     else:
                         logger.warning(f"Получен не голосовой пакет. Тип: {hex(packet_type)}, длина: {packet_length}")
                 else:
