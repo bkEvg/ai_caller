@@ -190,6 +190,7 @@ class AudioWebSocketClient:
         """
         Handle incoming events from the WebSocket server.
         """
+        ai_response_buffer = ''
         event_type = event.get("type")
         logger.debug(f"Received event type: {event_type}")
 
@@ -197,29 +198,35 @@ class AudioWebSocketClient:
             logger.error(f"Error event received: {event['error']['message']}")
 
         elif event_type == "response.text.delta":
-            # Print text response incrementally
-            logger.info(event["delta"])
+            # logger.info(event["delta"])
+            pass
 
         elif event_type == "response.audio.delta":
             # Append audio data to buffer
-            logger.info("Часть ответа добавляется в буффер на проигрывание")
+            # logger.info("Часть ответа добавляется в буффер на проигрывание")
             audio_data = base64.b64decode(event["delta"])
             await self.audio_handler.enqueue_audio(audio_data)
         elif event_type == "response.done":
-            logger.info("Response generation completed")
+            # logger.info("Response generation completed")
+            pass
         elif event_type == "conversation.item.created":
-            logger.info(f"Conversation item created: {event.get('item')}")
+            # logger.info(f"Conversation item created: {event.get('item')}")
+            pass
         elif event_type == "input_audio_buffer.speech_started":
             logger.info("📢 Пользователь начал говорить — прерываем ответ")
             await self.audio_handler.stop_playback()
         elif event_type == "input_audio_buffer.speech_stopped":
             logger.info("Speech stopped detected by server VAD")
         elif event_type == "response.audio_transcript.delta":
-            logger.info(event["delta"])
+            ai_response_buffer += event["delta"]
+        elif event_type == 'response.audio_transcript.done':
+            logger.info(f"Модель: {ai_response_buffer}")
+            ai_response_buffer = ''
         elif event_type == 'conversation.item.input_audio_transcription.delta':
-            logger.info(event)
+            logger.info(f"Пользователь: {event['delta']}")
         else:
-            logger.info(f"Unhandled event type: {event_type}")
+            # logger.info(f"Unhandled event type: {event_type}")
+            pass
 
     async def run(self):
         """
