@@ -109,12 +109,11 @@ async def append_status_to_call(channel_id: str, statuses: list[CallStatusDB]) -
         call: Call = await session.scalar(query)
         if not call:
             raise ValueError(f'Звонок с channel_id={channel_id} не найден.')
-        new_statuses = [
-            CallStatus(call_id=call.id, **status.model_dump())
-            for status in statuses
-        ]
-        call.statuses.extend(new_statuses)
-        session.add(call)
+
+        for status in statuses:
+            status_obj = CallStatus(call_id=call.id, **status.model_dump())
+            session.add(status_obj)
+
         await session.commit()
         await session.refresh(call)
     return call
