@@ -4,6 +4,7 @@ import json
 import base64
 import logging
 import ssl
+import uuid
 
 from src.constants import (OPENAI_API_KEY, REALTIME_MODEL, HOST, PORT,
                            OUTPUT_FORMAT, INPUT_FORMAT, DEFAULT_SAMPLE_RATE,
@@ -101,6 +102,8 @@ class AudioWebSocketClient:
         self.api_key = OPENAI_API_KEY
         self.ws = None
         self.audio_handler = AudioHandler(self.writer)
+        self.recieve_events = True
+        self.recieve_timeout = 60
 
         self.ssl_context = ssl.create_default_context()
         self.ssl_context.check_hostname = False
@@ -175,9 +178,22 @@ class AudioWebSocketClient:
         Continuously receive events from the WebSocket server.
         """
         try:
-            async for message in self.ws:
-                event = json.loads(message)
-                await self.handle_event(event)
+            # async for message in self.ws:
+            #     event = json.loads(message)
+            #     await self.handle_event(event)
+            while self.recieve_events:
+                try:
+                    message = await asyncio.wait_for(
+                        self.ws.recv(), timeout=self.recieve_timeout
+                    )
+                    event = json.loads(message)
+                    await self.handle_event(event)
+                except asyncio.TimeoutError:
+                    logger.warning(
+                        f"ВебСокет не отвечал в течении {self.recieve_timeout} секунд."
+                        "Закрываем соединение.")
+                    await self.cleanup()
+                    break
         except websockets.ConnectionClosed as e:
             logger.error(f"WebSocket connection closed: {e}")
         except Exception as e:
@@ -242,8 +258,9 @@ class AudioWebSocketClient:
                                 "audio": base64_data
                             })
                         elif packet_type == 0x01:
+                            stream_uuid = uuid.UUID(bytes=payload)
                             logger.info(
-                                f"Получен UUID потока: {payload}"
+                                f"Получен UUID потока: {stream_uuid}"
                             )
                         else:
                             logger.warning(
