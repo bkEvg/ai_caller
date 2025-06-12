@@ -109,6 +109,7 @@ class AudioWebSocketClient:
         self.ssl_context.check_hostname = False
         self.ssl_context.verify_mode = ssl.CERT_NONE
 
+        self.recieve_tasks = None
         self.instructions = instructions
         self.voice = voice
 
@@ -230,18 +231,18 @@ class AudioWebSocketClient:
             # logger.info(f"Unhandled event type: {event_type}")
             pass
 
+    async def background_tasks(self):
+        # Connect to RealtimeAPI ws
+        await self.connect()
+
+        # Start receiving events in the background
+        self.receive_task = asyncio.create_task(self.receive_events())
+
     async def run(self):
         """
         Main loop for handling audio socket interaction.
         """
 
-        # Start playing data from Queue
-        # asyncio.create_task(
-        #     self.audio_handler.start_playback_loop()
-        # )
-
-        # Start receiving events in the background
-        receive_task = asyncio.create_task(self.receive_events())
         parser = AudioSocketParser()
 
         try:
@@ -260,7 +261,7 @@ class AudioWebSocketClient:
                             logger.info(
                                 f"Получен UUID потока: {stream_uuid}"
                             )
-                            await self.connect()
+                            await self.background_tasks()
                         elif packet_type == 0x10:
                             base64_data = base64.b64encode(payload).decode('utf-8')
                             await self.send_event({
