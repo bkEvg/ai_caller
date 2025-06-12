@@ -25,7 +25,7 @@ services:
     <<: *service-common
     image: bkevg/ai_caller-backend:latest
     healthcheck:
-      test: ["CMD", "curl", "--fail", "http://localhost:9000/docs"]
+      test: ["CMD", "curl", "--fail", "http://localhost:9000/health"]
       interval: 10s
       timeout: 10s
       retries: 5
