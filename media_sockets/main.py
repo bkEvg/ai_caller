@@ -131,7 +131,6 @@ class AudioWebSocketClient:
 
         self.session_config = {
             "modalities": ["audio", "text"],
-            "instructions": self.instructions,
             "voice": self.voice,
             "input_audio_format": INPUT_FORMAT,
             "output_audio_format": OUTPUT_FORMAT,
@@ -163,6 +162,8 @@ class AudioWebSocketClient:
             ssl=self.ssl_context
         )
         logger.info("Successfully connected to OpenAI Realtime API")
+
+        self.session_config['instructions'] = self.instructions
 
         await self.send_event({
             "type": "session.update",
