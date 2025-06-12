@@ -251,6 +251,8 @@ class AudioWebSocketClient:
                                 f"Тип: {hex(packet_type)}, "
                                 f"длина: {packet_length}"
                             )
+                    else:
+                        logger.warning('Попытка распарсить пакет потерпела неудачу.')
                 else:
                     raise ValueError('No data from external media')
 
