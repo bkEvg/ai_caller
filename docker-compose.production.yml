@@ -5,6 +5,8 @@ services:
     image: bkevg/ai_caller-gateway:latest
     ports:
       - '5060:80'
+    depends_on:
+      - backend
   backend:
     image: bkevg/ai_caller-backend:latest
     env_file:
