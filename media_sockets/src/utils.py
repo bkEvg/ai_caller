@@ -73,6 +73,6 @@ class AudioSocketParser:
         total_length = 3 + payload_length
         if len(self.buffer) < total_length:
             return None
-        payload = bytes(self.buffer[3:payload_length])
+        payload = bytes(self.buffer[3:3 + payload_length])
         del self.buffer[:total_length]
         return obj_type, payload_length, payload
