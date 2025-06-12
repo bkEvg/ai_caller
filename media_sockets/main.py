@@ -11,7 +11,7 @@ from src.constants import (OPENAI_API_KEY, REALTIME_MODEL, HOST, PORT,
                            DEFAULT_SAMPLE_WIDTH, OPENAI_OUTPUT_RATE,
                            DRAIN_CHUNK_SIZE, READER_BYTES_LIMIT)
 from src.utils import AudioSocketParser, AudioConverter
-from src.instructions import INSTRUCTIONS
+from src.instructions import INSTRUCTIONS, DEFAULT_PROMPT
 
 logging.basicConfig(
     level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s'
@@ -147,6 +147,9 @@ class AudioWebSocketClient:
         """
         Connect to the WebSocket server.
         """
+        if self.ws:
+            return
+
         logger.info(f"Connecting to WebSocket: {self.url}")
         headers = {
             "Authorization": f"Bearer {self.api_key}",
@@ -231,7 +234,6 @@ class AudioWebSocketClient:
         """
         Main loop for handling audio socket interaction.
         """
-        await self.connect()
 
         # Start playing data from Queue
         # asyncio.create_task(
@@ -251,17 +253,20 @@ class AudioWebSocketClient:
                     parse_result = parser.parse_packet()
                     if parse_result:
                         packet_type, packet_length, payload = parse_result
-                        if packet_type == 0x10:
+                        if packet_type == 0x01:
+                            stream_uuid = uuid.UUID(bytes=payload)
+                            if stream_uuid == "f47ac10b-58cc-4372-a567-0e02b2c3d479":
+                                self.instructions = DEFAULT_PROMPT
+                            logger.info(
+                                f"Получен UUID потока: {stream_uuid}"
+                            )
+                            await self.connect()
+                        elif packet_type == 0x10:
                             base64_data = base64.b64encode(payload).decode('utf-8')
                             await self.send_event({
                                 "type": "input_audio_buffer.append",
                                 "audio": base64_data
                             })
-                        elif packet_type == 0x01:
-                            stream_uuid = uuid.UUID(bytes=payload)
-                            logger.info(
-                                f"Получен UUID потока: {stream_uuid}"
-                            )
                         else:
                             logger.warning(
                                 "Получен не голосовой пакет. "

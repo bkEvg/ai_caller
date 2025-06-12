@@ -1,5 +1,6 @@
 import asyncio
 from fastapi import APIRouter
+import uuid
 
 from app.ari.ari_commands import AriClient, WSHandler
 from app.ari.ari_config import (ARI_HOST, AUTH_HEADER, WEBSOCKET_HOST)
@@ -15,9 +16,25 @@ calls_router = APIRouter()
     description="Отправить запрос на вызов номера Нейро Ассистентом.")
 async def make_call(request: PhoneCreate):
     # Инициализация клиента и WebSocket обработчика
+    session_id = str(uuid.uuid4())
     ari_client = AriClient(ARI_HOST, AUTH_HEADER)
     ws_handler = WSHandler(WEBSOCKET_HOST, AUTH_HEADER, ari_client,
-                           request.digits)
+                           request.digits, session_id)
+
+    # Подключаемся и начинаем слушать события
+    asyncio.create_task(ws_handler.connect())
+    return 'created'
+
+
+@calls_router.post(
+    '/clean',
+    tags=['Звонок'])
+async def make_call(request: PhoneCreate):
+    # Инициализация клиента и WebSocket обработчика
+    session_id = "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+    ari_client = AriClient(ARI_HOST, AUTH_HEADER)
+    ws_handler = WSHandler(WEBSOCKET_HOST, AUTH_HEADER, ari_client,
+                           request.digits, session_id)
 
     # Подключаемся и начинаем слушать события
     asyncio.create_task(ws_handler.connect())

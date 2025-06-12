@@ -114,7 +114,7 @@ class AriClient:
         }
         await self._send_request(url, "POST", data)
 
-    async def create_external_media(self):
+    async def create_external_media(self, uuid: str):
         url = f"{ARI_HOST}/channels/externalMedia"
         data = {
             "app": STASIS_APP_NAME,
@@ -122,7 +122,7 @@ class AriClient:
             "encapsulation": "audiosocket",
             "transport": "tcp",
             "format": "alaw",
-            "data": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+            "data": uuid
         }
         return await self._send_request(url, 'POST', data)
 
@@ -140,11 +140,12 @@ class WSHandler:
     """Обработчик WebSocket событий."""
 
     def __init__(self, ws_host: str, headers: dict, ari_client: AriClient,
-                 phone: str):
+                 phone: str, uuid: str):
         self.ws_host = ws_host
         self.headers = headers
         self.ari_client = ari_client
         self.phone = phone
+        self.uuid = uuid
         self.sip_endpoint = f'SIP/{self.phone}@{SIPUNI_HOST}'
         self.current_bridge_id = None
         self.current_external_id = None
@@ -202,7 +203,7 @@ class WSHandler:
             logger.error(f'CLIENT_CHANNEL_ID: {self.client_channel_id}')
             logger.error(f'BRIDGE_ID: {self.current_bridge_id}')
 
-            external_media = await self.ari_client.create_external_media()
+            external_media = await self.ari_client.create_external_media(self.uuid)
 
             logger.error(f'EXTERNAL_MEDIA_ID: {external_media}')
             self.current_external_id = external_media['id']
