@@ -1,7 +1,7 @@
 volumes:
   postgres_data:
 
-service-common: &service-common
+x-common: &service-common
   restart: always
   env_file:
     - .env
