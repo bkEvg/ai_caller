@@ -4,7 +4,6 @@ import json
 import base64
 import logging
 import ssl
-import time
 
 from src.constants import (OPENAI_API_KEY, REALTIME_MODEL, HOST, PORT,
                            OUTPUT_FORMAT, INPUT_FORMAT, DEFAULT_SAMPLE_RATE,
@@ -24,9 +23,6 @@ class AudioHandler:
     Handles audio input and output.
     """
     def __init__(self, writer):
-        self.audio_buffer = b''
-
-        self.is_running = False
         self.audio_queue = asyncio.Queue()
         self.playback_task = None
         self.stop_playback_flag = False
@@ -51,7 +47,7 @@ class AudioHandler:
     async def enqueue_audio(self, audio_data):
         await self.audio_queue.put(audio_data)
         if self.playback_task is None or self.playback_task.done():
-            logger.info("🔁 Перезапуск воспроизведения")
+            logger.info("Перезапуск воспроизведения")
             await self.start_playback_loop()
 
     def clear_audio_queue(self):
@@ -87,6 +83,10 @@ class AudioHandler:
                 await self.writer.drain()
                 await asyncio.sleep(pause)
 
+    async def cleanup(self):
+        await self.stop_playback()
+        await self.clear_audio_queue()
+
 
 class AudioWebSocketClient:
     """
@@ -106,7 +106,6 @@ class AudioWebSocketClient:
         self.ssl_context.check_hostname = False
         self.ssl_context.verify_mode = ssl.CERT_NONE
 
-        self.audio_buffer = b''
         self.instructions = instructions
         self.voice = voice
 
@@ -193,22 +192,9 @@ class AudioWebSocketClient:
 
         if event_type == "error":
             logger.error(f"Error event received: {event['error']['message']}")
-
-        elif event_type == "response.text.delta":
-            # logger.info(event["delta"])
-            pass
-
         elif event_type == "response.audio.delta":
-            # Append audio data to buffer
-            # logger.info("Часть ответа добавляется в буффер на проигрывание")
             audio_data = base64.b64decode(event["delta"])
             await self.audio_handler.enqueue_audio(audio_data)
-        elif event_type == "response.done":
-            # logger.info("Response generation completed")
-            pass
-        elif event_type == "conversation.item.created":
-            # logger.info(f"Conversation item created: {event.get('item')}")
-            pass
         elif event_type == "input_audio_buffer.speech_started":
             logger.info("📢 Пользователь начал говорить — прерываем ответ")
             await self.audio_handler.stop_playback()
@@ -232,9 +218,9 @@ class AudioWebSocketClient:
         await self.connect()
 
         # Start playing data from Queue
-        asyncio.create_task(
-            self.audio_handler.start_playback_loop()
-        )
+        # asyncio.create_task(
+        #     self.audio_handler.start_playback_loop()
+        # )
 
         # Start receiving events in the background
         receive_task = asyncio.create_task(self.receive_events())
@@ -256,13 +242,17 @@ class AudioWebSocketClient:
                                 "audio": base64_data
                             })
                         elif packet_type == 0x01:
-                            logger.info(f"Получен UUID потока: {payload}")
+                            logger.info(
+                                f"Получен UUID потока: {payload.decode('utf-8')}"
+                            )
                         else:
                             logger.warning(
                                 "Получен не голосовой пакет. "
-                                f"Тип: {hex(packet_type)}, длина: {packet_length}")
+                                f"Тип: {hex(packet_type)}, "
+                                f"длина: {packet_length}"
+                            )
                 else:
-                    logger.error('No data from external media')
+                    raise ValueError('No data from external media')
 
         except Exception as e:
             logger.error(f"Error in audio socket communication: {e}")
@@ -277,13 +267,13 @@ class AudioWebSocketClient:
         """
         if self.ws:
             await self.ws.close()
+        await self.audio_handler.cleanup()
 
 
 async def handle_audiosocket_connection(reader, writer):
     """
     Handle connection for audio socket and OpenAI Realtime communication.
     """
-    logger.debug('handle_audiosocket_connection() started')
     client = AudioWebSocketClient(reader, writer, INSTRUCTIONS)
     await client.run()
 
