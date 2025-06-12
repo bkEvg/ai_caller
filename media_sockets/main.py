@@ -256,7 +256,7 @@ class AudioWebSocketClient:
                     if parse_result:
                         packet_type, packet_length, payload = parse_result
                         if packet_type == 0x01:
-                            stream_uuid = uuid.UUID(bytes=payload)
+                            stream_uuid = str(uuid.UUID(bytes=payload))
                             if stream_uuid == "f47ac10b-58cc-4372-a567-0e02b2c3d479":
                                 self.instructions = DEFAULT_PROMPT
                             logger.info(
