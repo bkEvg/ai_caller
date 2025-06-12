@@ -243,7 +243,7 @@ class AudioWebSocketClient:
                             })
                         elif packet_type == 0x01:
                             logger.info(
-                                f"Получен UUID потока: {payload.decode('utf-8')}"
+                                f"Получен UUID потока: {payload}"
                             )
                         else:
                             logger.warning(
