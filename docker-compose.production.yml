@@ -8,6 +8,7 @@ x-common: &service-common
 
 services:
   gateway:
+    <<: *service-common
     image: bkevg/ai_caller-gateway:latest
     ports:
       - '5060:80'
