@@ -140,7 +140,7 @@ class AudioWebSocketClient:
             "input_audio_transcription": {  # Get transcription of user turns
                 "model": "whisper-1"
             },
-            "temperature": 0.7
+            "temperature": 0.5
         }
 
     async def connect(self):
@@ -183,9 +183,6 @@ class AudioWebSocketClient:
         Continuously receive events from the WebSocket server.
         """
         try:
-            # async for message in self.ws:
-            #     event = json.loads(message)
-            #     await self.handle_event(event)
             while self.recieve_events:
                 try:
                     message = await asyncio.wait_for(
@@ -284,7 +281,7 @@ class AudioWebSocketClient:
             logger.error(f"Error in audio socket communication: {e}")
 
         finally:
-            receive_task.cancel()
+            self.receive_task.cancel()
             await self.cleanup()
 
     async def cleanup(self):
