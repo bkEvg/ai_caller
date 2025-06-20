@@ -140,7 +140,7 @@ class AudioWebSocketClient:
             "input_audio_transcription": {  # Get transcription of user turns
                 "model": "whisper-1"
             },
-            "temperature": 0.5
+            "temperature": 0.6
         }
 
     async def connect(self):
