@@ -67,7 +67,8 @@ async def get_phone_by_digits(digits: str) -> Optional[Phone]:
 
 async def delete_phone_by_digits(digits: str) -> None:
     async with AsyncSessionLocal() as session:
-        phone = await session.scalar(select(Phone).where(Phone.digits == digits))
+        query = select(Phone).where(Phone.digits == digits)
+        phone = await session.scalar(query)
         if phone:
             await session.delete(phone)
             await session.commit()
@@ -117,7 +118,8 @@ async def create_call_status(call_status_data: CallStatusCreate) -> CallStatus:
     return status
 
 
-async def append_status_to_call(channel_id: str, statuses: list[CallStatusDB]) -> Call:
+async def append_status_to_call(channel_id: str,
+                                statuses: list[CallStatusDB]) -> Call:
     async with AsyncSessionLocal() as session:
         query = select(Call).where(Call.channel_id == channel_id)
         call: Call = await session.scalar(query)

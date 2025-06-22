@@ -8,7 +8,8 @@ import logging
 
 from .ari_config import (ARI_HOST, STASIS_APP_NAME, EXTERNAL_HOST, SIP_HOST)
 from app.crud.ai_agent import create_call, append_status_to_call
-from app.schemas.ai_agent import CallCreate, PhoneCreate, CallStatusDB, CallStatuses
+from app.schemas.ai_agent import (CallCreate, PhoneCreate, CallStatusDB,
+                                  CallStatuses)
 
 logger = logging.getLogger(__name__)
 
@@ -146,6 +147,7 @@ class WSHandler:
         self.ari_client = ari_client
         self.phone = phone
         self.uuid = uuid
+        self.call = None
         self.sip_endpoint = f'SIP/{self.phone}@{SIP_HOST}'
         self.current_bridge_id = None
         self.current_external_id = None
@@ -199,12 +201,13 @@ class WSHandler:
                 uuid=self.uuid,
                 statuses=[CallStatusDB(status_str=CallStatuses.CREATED)]
             )
-            call = await create_call(call_data)
+            self.call = await create_call(call_data)
 
             logger.error(f'CLIENT_CHANNEL_ID: {self.client_channel_id}')
             logger.error(f'BRIDGE_ID: {self.current_bridge_id}')
 
-            external_media = await self.ari_client.create_external_media(self.uuid)
+            external_media = await self.ari_client.create_external_media(
+                self.uuid)
 
             logger.error(f'EXTERNAL_MEDIA_ID: {external_media}')
             self.current_external_id = external_media['id']
