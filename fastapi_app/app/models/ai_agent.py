@@ -45,8 +45,10 @@ class Call(Base):
 
     channel_id: Mapped[str] = mapped_column(
         String(MAX_CHANNEL_LENGTH), unique=True, nullable=True)
-    uuid: Mapped[str] = mapped_column(String(MAX_UUID_LENGTH), unique=True)
-    status: Mapped[str] = mapped_column(String(MAX_STATUS_LENGTH))
+    uuid: Mapped[str] = mapped_column(
+        String(MAX_UUID_LENGTH), unique=True, nullable=True)
+    status: Mapped[str] = mapped_column(
+        String(MAX_STATUS_LENGTH), nullable=True)
 
     # Relationships
     phone_id: Mapped[int] = mapped_column(ForeignKey('phone.id'))

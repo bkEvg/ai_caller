@@ -13,12 +13,10 @@ async def create_call(call_data: CallCreate) -> Call:
     """Create Call object."""
     async with AsyncSessionLocal() as session:
         phone_obj = await get_or_create_phone(call_data.phone.digits)
-        dialog_obj = Dialog()
 
         # Создаём Call
         call_obj = Call(
             phone=phone_obj,
-            dialog=dialog_obj,
             **call_data.model_dump(exclude=['phone', 'statuses'])
         )
 
@@ -145,8 +143,12 @@ async def get_statuses_for_call(call_id: int) -> List[CallStatus]:
 
 # Dialog
 async def add_speech_to_call(schema: AddPhrasesToCall):
-    call = await get_call_by_uuid(schema.uuid)
-    call.dialog.phrases = [
-        Phrase(content=content)
-        for content in schema.phrases
-    ]
+    async with AsyncSessionLocal() as session:
+        phrases = [
+            Phrase(content=content)
+            for content in schema.phrases
+        ]
+        call = await get_call_by_uuid(schema.uuid)
+        dialog = Dialog(call=call, phrases=phrases)
+        session.add(dialog)
+        await session.commit()

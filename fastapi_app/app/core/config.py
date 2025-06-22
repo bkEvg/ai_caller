@@ -17,7 +17,8 @@ class Settings(BaseSettings):
     POSTGRES_DB: str
 
     model_config = SettingsConfigDict(
-        extra='ignore'
+        extra='ignore',
+        env_file='../.env'
     )
 
     @property
