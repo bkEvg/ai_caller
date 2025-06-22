@@ -6,7 +6,7 @@ import websockets
 import json
 import logging
 
-from .ari_config import (ARI_HOST, STASIS_APP_NAME, EXTERNAL_HOST, SIP_HOST)
+from .ari_config import (ARI_HOST, STASIS_APP_NAME, EXTERNAL_HOST, SIP_HOST, ARI_TIMEOUT)
 from app.crud.ai_agent import create_call, append_status_to_call
 from app.schemas.ai_agent import (CallCreate, PhoneCreate, CallStatusDB,
                                   CallStatuses)
@@ -20,7 +20,7 @@ class AriClient:
     def __init__(self, base_url: str, headers: dict):
         self.base_url = base_url
         self.headers = headers
-        self.client = httpx.AsyncClient()
+        self.client = httpx.AsyncClient(timeout=httpx.Timeout(ARI_TIMEOUT))
 
     def _normalize_response(self, response) -> dict:
         """Нормализуем ответ от ARI и проверяем статус."""
