@@ -109,7 +109,7 @@ class AudioWebSocketClient:
         self.ssl_context.check_hostname = False
         self.ssl_context.verify_mode = ssl.CERT_NONE
 
-        self.recieve_tasks = None
+        self.receive_task = None
         self.instructions = instructions
         self.voice = voice
 
@@ -281,7 +281,7 @@ class AudioWebSocketClient:
             logger.error(f"Error in audio socket communication: {e}")
 
         finally:
-            # self.receive_task.cancel()
+            self.receive_task.cancel()
             await self.cleanup()
 
     async def cleanup(self):
