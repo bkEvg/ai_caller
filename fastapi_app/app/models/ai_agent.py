@@ -43,9 +43,9 @@ class Dialog(Base):
 
 
 class Phrase(Base):
-    """Model of user's phases."""
+    """Model of user's phrases."""
 
     dialog_id: Mapped[int] = mapped_column(ForeignKey('dialog.id'))
     dialog: Mapped[Dialog] = relationship(back_populates='phrases',
-                                          cascade='all, delete-orphans')
+                                          cascade='all, delete-orphan')
     content: Mapped[str] = mapped_column(Text, nullable=True)
