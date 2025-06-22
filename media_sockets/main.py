@@ -281,7 +281,6 @@ class AudioWebSocketClient:
             logger.error(f"Error in audio socket communication: {e}")
 
         finally:
-            self.receive_task.cancel()
             await self.cleanup()
 
     async def cleanup(self):
@@ -290,6 +289,7 @@ class AudioWebSocketClient:
         """
         if self.ws:
             await self.ws.close()
+        self.receive_task.cancel()
         await self.audio_handler.cleanup()
 
 
