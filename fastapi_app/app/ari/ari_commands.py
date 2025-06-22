@@ -6,7 +6,7 @@ import websockets
 import json
 import logging
 
-from .ari_config import (ARI_HOST, STASIS_APP_NAME, EXTERNAL_HOST, SIPUNI_HOST)
+from .ari_config import (ARI_HOST, STASIS_APP_NAME, EXTERNAL_HOST, SIP_HOST)
 from app.crud.ai_agent import create_call, append_status_to_call
 from app.schemas.ai_agent import CallCreate, PhoneCreate, CallStatusDB, CallStatuses
 
@@ -146,7 +146,7 @@ class WSHandler:
         self.ari_client = ari_client
         self.phone = phone
         self.uuid = uuid
-        self.sip_endpoint = f'SIP/{self.phone}@{SIPUNI_HOST}'
+        self.sip_endpoint = f'SIP/{self.phone}@{SIP_HOST}'
         self.current_bridge_id = None
         self.current_external_id = None
         self.client_channel_id = None

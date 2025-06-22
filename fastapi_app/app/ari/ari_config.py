@@ -5,12 +5,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-HOST = '31.129.35.221:8088'
-EXTERNAL_HOST = '217.114.9.31:7575'
+HOST = os.environ.get('ARI_IP')
+EXTERNAL_HOST = os.environ.get('ARI_EXTERNAL_IP_HOST')
 ARI_HOST = f"http://{HOST}/ari"
-SIPUNI_HOST = 'terraai-test-sipuni'
-# SIPUNI_HOST = 'terraai-test'
-ARI_USER = "terra-user-01"
+SIP_HOST = os.environ.get('SIP_HOST')
+ARI_USER = os.environ.get('ARI_USER')
 ARI_PASSWORD = os.environ.get('ARI_PASS')
 STASIS_APP_NAME = 'fast_api'
 WEBSOCKET_HOST = f"ws://{HOST}/ari/events?app={STASIS_APP_NAME}"
@@ -22,4 +21,3 @@ base64_auth = base64.b64encode(auth_bytes).decode('utf-8')
 AUTH_HEADER = {
     'Authorization': f'Basic {base64_auth}'
 }
-

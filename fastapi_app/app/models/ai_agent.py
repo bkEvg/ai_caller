@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, ForeignKey
+from sqlalchemy import String, ForeignKey, Text
 
 from app.core.db import Base
 
@@ -36,3 +36,16 @@ class CallStatus(Base):
     status_str: Mapped[str] = mapped_column(String(MAX_STATUS_LENGTH))
     call_id: Mapped[int] = mapped_column(ForeignKey('call.id'))
     call: Mapped[Call] = relationship(back_populates='statuses')
+
+
+class Dialog(Base):
+    """Model of Dialog between users."""
+
+
+class Phrase(Base):
+    """Model of user's phases."""
+
+    dialog_id: Mapped[int] = mapped_column(ForeignKey('dialog.id'))
+    dialog: Mapped[Dialog] = relationship(back_populates='phrases',
+                                          cascade='all, delete-orphans')
+    content: Mapped[str] = mapped_column(Text, nullable=True)
