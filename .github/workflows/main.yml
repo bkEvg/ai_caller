@@ -81,7 +81,7 @@ jobs:
           username: ${{ secrets.USER }}
           host: ${{ secrets.HOST }}
           key: ${{ secrets.SSH_KEY }}
-          source: "docker-compose.production.yml"
+          source: "docker-compose.production.yml,Makefile"
           target: "ai_caller"
       - name: Execute remote commands with ssh conn
         uses: appleboy/ssh-action@master
