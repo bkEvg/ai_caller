@@ -196,6 +196,7 @@ class WSHandler:
             phone_data = PhoneCreate(digits=self.phone)
             call_data = CallCreate(
                 channel_id=self.client_channel_id, phone=phone_data,
+                uuid=self.uuid,
                 statuses=[CallStatusDB(status_str=CallStatuses.CREATED)]
             )
             call = await create_call(call_data)

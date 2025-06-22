@@ -45,23 +45,10 @@ class CallStatuses(str, Enum):
     CHANNEL_DIALPLAN = 'ChannelDialplan'
 
 
-class CallCreate(BaseModel):
-    """Schema for Creating Call instance."""
-
-    channel_id: str
-    phone: 'PhoneCreate'
-    statuses: Optional[list['CallStatusDB']] = None
-
-
-class CallDB(BaseModel):
-    """Schema for Call model"""
-
-    id: int
-    channel_id: Optional[str]
-    phone: 'PhoneDB'
-    statuses: list['CallStatusDB']
-
-    model_config = ConfigDict(from_attributes=True)
+class CallStatus(str, Enum):
+    STARTED = 'started'
+    FINISHED = 'finished'
+    FAILED = 'failed'
 
 
 class PhoneCreate(BaseModel):
@@ -100,3 +87,36 @@ class CallStatusDB(BaseModel):
     status_str: CallStatuses
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class CallCreate(BaseModel):
+    """Schema for Creating Call instance."""
+
+    channel_id: str
+    uuid: str
+    phone: PhoneCreate
+    status: Optional[CallStatus] = CallStatus.STARTED.value
+    statuses: Optional[list[CallStatusDB]] = None
+
+
+class CallDB(BaseModel):
+    """Schema for Call model"""
+
+    id: int
+    uuid: str
+    status: CallStatus
+    channel_id: Optional[str]
+    phone: PhoneDB
+    statuses: list[CallStatusDB]
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class Phrase(BaseModel):
+    """Schema for phrase of dialog"""
+    content: str
+
+
+class AddPhrasesToCall(BaseModel):
+    uuid: str
+    phrases: list[str]

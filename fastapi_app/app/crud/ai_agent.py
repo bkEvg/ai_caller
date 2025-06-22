@@ -3,22 +3,24 @@ from typing import Optional, List
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 
-from app.models.ai_agent import Call, Phone, CallStatus
+from app.models.ai_agent import Call, Phone, CallStatus, Dialog, Phrase
 from app.schemas.ai_agent import (CallCreate, PhoneCreate, CallStatusCreate,
-                                  CallStatusDB)
+                                  CallStatusDB, AddPhrasesToCall)
 from app.core.db import AsyncSessionLocal
 
 
 async def create_call(call_data: CallCreate) -> Call:
     """Create Call object."""
-    phone_obj = await get_phone_by_digits(call_data.phone.digits)
     async with AsyncSessionLocal() as session:
-        if not phone_obj:
-            # Создаём Phone из вложенной схемы
-            phone_obj = Phone(digits=call_data.phone.digits)
+        phone_obj = await get_or_create_phone(call_data.phone.digits)
+        dialog_obj = Dialog()
 
         # Создаём Call
-        call_obj = Call(phone=phone_obj, channel_id=call_data.channel_id)
+        call_obj = Call(
+            phone=phone_obj,
+            dialog=dialog_obj,
+            **call_data.model_dump(exclude=['phone', 'statuses'])
+        )
 
         # Создаём CallStatus объекты, если есть
         if call_data.statuses:
@@ -40,6 +42,13 @@ async def create_call(call_data: CallCreate) -> Call:
 
 
 # Phone
+
+async def get_or_create_phone(digits: str) -> Phone:
+    result = await get_phone_by_digits(digits)
+    if not result:
+        result = await create_phone(PhoneCreate(digits=digits))
+    return result
+
 
 async def create_phone(phone_data: PhoneCreate):
     """Create Phone object in db."""
@@ -71,6 +80,13 @@ async def delete_phone_by_digits(digits: str) -> None:
 async def get_call_by_channel(channel_id: str) -> Optional[Call]:
     async with AsyncSessionLocal() as session:
         query = select(Call).where(Call.channel_id == channel_id)
+        call = await session.scalar(query)
+    return call
+
+
+async def get_call_by_uuid(uuid: str) -> Optional[Call]:
+    async with AsyncSessionLocal() as session:
+        query = select(Call).where(Call.uuid == uuid)
         call = await session.scalar(query)
     return call
 
@@ -125,3 +141,12 @@ async def get_statuses_for_call(call_id: int) -> List[CallStatus]:
             CallStatus.call_id == call_id).order_by(CallStatus.created_at)
         result = await session.scalars(query)
     return result.all()
+
+
+# Dialog
+async def add_speech_to_call(schema: AddPhrasesToCall):
+    call = await get_call_by_uuid(schema.uuid)
+    call.dialog.phrases = [
+        Phrase(content=content)
+        for content in schema.phrases
+    ]
