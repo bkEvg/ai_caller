@@ -55,11 +55,11 @@ logs:
 exec:
 	docker compose -f $(COMPOSE_FILE) exec -it $(ARGS)
 
-prune:
-	docker compose -f $(COMPOSE_FILE) image prune -f
-
 rmi-dangling:
 	docker rmi `docker images -f "dangling=true" -q`
+
+prune:
+	docker image prune -f
 
 clean-volumes:
 	docker volume prune -f
@@ -83,7 +83,7 @@ clean-all:
 		fi \
 	fi; \
 	$(MAKE) rmi-dangling; \
-	$(MAKE) compose-prune; \
+	$(MAKE) prune; \
 	$(MAKE) clean-volumes; \
 	$(MAKE) clean-system; \
 	echo "Очистка завершена."
