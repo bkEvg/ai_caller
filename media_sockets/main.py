@@ -9,7 +9,8 @@ import uuid
 from src.constants import (OPENAI_API_KEY, REALTIME_MODEL, HOST, PORT,
                            OUTPUT_FORMAT, INPUT_FORMAT, DEFAULT_SAMPLE_RATE,
                            DEFAULT_SAMPLE_WIDTH, OPENAI_OUTPUT_RATE,
-                           DRAIN_CHUNK_SIZE, READER_BYTES_LIMIT)
+                           DRAIN_CHUNK_SIZE, READER_BYTES_LIMIT,
+                           INTERRUPT_PAUSE)
 from src.utils import AudioSocketParser, AudioConverter
 from src.instructions import INSTRUCTIONS, DEFAULT_PROMPT
 
@@ -57,7 +58,7 @@ class AudioHandler:
             self.audio_queue.task_done()
 
     async def stop_playback(self):
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(INTERRUPT_PAUSE)
         self.stop_playback_flag = True
         self.clear_audio_queue()
         if self.playback_task and not self.playback_task.done():
