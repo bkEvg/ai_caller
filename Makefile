@@ -65,4 +65,4 @@ clean-all:
 		echo "Отменено."; \
 	fi
 
-reset: rm build create start
+reset: clean-all rm build create start
