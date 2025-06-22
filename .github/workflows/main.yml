@@ -94,4 +94,4 @@ jobs:
             cd ai_caller
             echo "${{ secrets.HOST_PASSWORD }}" | sudo -S docker compose -f docker-compose.production.yml pull
             echo "${{ secrets.HOST_PASSWORD }}" | sudo make reset
-            echo "${{ secrets.HOST_PASSWORD }}" | sudo make clean-all -y
+            echo "${{ secrets.HOST_PASSWORD }}" | sudo make clean-all CONFIRM=false
