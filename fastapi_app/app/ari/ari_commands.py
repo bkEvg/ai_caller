@@ -156,21 +156,19 @@ class WSHandler:
 
     async def handle_events(self, websocket):
         """Обрабатываем события."""
-        await asyncio.sleep(2)
-        await append_status_to_call(
-            self.client_channel_id,
-            [CallStatusDB(status_str=CallStatuses.STASIS_START)])
-        await self.ari_client.dial_channel(self.client_channel_id)
-
         while True:
             message = await websocket.recv()
             event = json.loads(message)
             logger.error(event)
             event_type = event['type']
             logger.error(event_type)
-            # if event_type == 'StasisStart' and event['state'] == 'Up':
-            #     logger.error('Вызов канала')
-            #     # channel_id = event['channel']['id']
+            if event_type == 'StasisStart':
+                logger.error('Приложение получило доступ к управлению')
+                channel_id = event['channel']['id']
+                await append_status_to_call(
+                    self.client_channel_id,
+                    [CallStatusDB(status_str=CallStatuses.STASIS_START)])
+                await self.ari_client.dial_channel(channel_id)
 
             if event_type == 'Dial' and event['dialstatus'] == 'ANSWER':
                 logger.error('Абонент ответил')
