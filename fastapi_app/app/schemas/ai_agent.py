@@ -95,7 +95,7 @@ class CallCreate(BaseModel):
     channel_id: str
     uuid: str
     phone: PhoneCreate
-    status: Optional[CallStatus] = CallStatus.STARTED.value
+    status: Optional[CallStatus] = CallStatus.STARTED
     statuses: Optional[list[CallStatusDB]] = None
 
 
