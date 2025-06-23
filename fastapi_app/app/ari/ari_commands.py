@@ -159,7 +159,6 @@ class WSHandler:
         while True:
             message = await websocket.recv()
             event = json.loads(message)
-            logger.error(event)
             event_type = event['type']
             logger.error(event_type)
             if event_type == 'StasisStart':
