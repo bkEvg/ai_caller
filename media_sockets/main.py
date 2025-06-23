@@ -193,7 +193,7 @@ class AudioWebSocketClient:
                     await self.handle_event(event)
                 except asyncio.TimeoutError:
                     logger.warning(
-                        f"ВебСокет не отвечал в течении {self.recieve_timeout} секунд."
+                        f"ВебСокет не отвечал в течении {self.recieve_timeout} секунд. "
                         "Закрываем соединение.")
                     await self.cleanup()
                     break

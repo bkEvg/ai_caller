@@ -20,7 +20,7 @@ services:
     ports:
       - '7575:7575'
   postgres:
-    image: postgres:17
+    image: postgres:15
     env_file:
       - ./.env
     volumes:

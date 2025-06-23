@@ -40,7 +40,7 @@ services:
       - '7575:7575'
   postgres:
     <<: *service-common
-    image: postgres:17
+    image: postgres:15
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
