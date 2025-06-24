@@ -156,7 +156,8 @@ class WSHandler:
     async def handle_connection_info(
             self, event_type: str, event: dict) -> None:
         """Обрабатываем информацию приходящую о соединении."""
-        pass
+        logger.error(event)
+        logger.error(event_type)
 
     async def handle_client_channel_events(
             self, event_type: str, event: dict) -> None:
@@ -173,7 +174,10 @@ class WSHandler:
             event.get('dialstatus') == 'ANSWER'
             and event.get('peer', {}).get('id') == self.client_channel_id
         )
-        logger.info(f"ОТВЕТИЛИИИИИИ???? {client_channel_answer} а вот почему peer.id, status = {event.get('peer', {}).get('id'), event.get('dialstatus')}")
+        # logger.info(
+        #     f"ОТВЕТИЛИИИИИИ???? {client_channel_answer} а вот почему "
+        #     f"peer.id, status = {event.get('peer', {}).get('id'), event.get('dialstatus')}"
+        # )
         if event_type == 'StasisStart' and client_channel_event:
             logger.error('Приложение получило доступ к управлению')
             await append_status_to_call(
@@ -198,8 +202,6 @@ class WSHandler:
             message = await websocket.recv()
             event = json.loads(message)
             event_type = event['type']
-            logger.error(event)
-            logger.error(event_type)
             await self.handle_client_channel_events(event_type, event)
             if event_type == 'ChannelVarset':
                 # Если событие с переменной канала - это инфа о соединении
