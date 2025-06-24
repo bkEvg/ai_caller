@@ -149,10 +149,9 @@ class WSHandler:
         self.uuid = uuid
         self.call = None
         self.sip_endpoint = f'SIP/{self.phone}@{SIP_HOST}'
-        self.current_bridge_id = None
-        self.current_external_id = None
-        self.client_channel_id = None
-        self.snoop_channel_id = None
+        self.current_bridge_id: str = None
+        self.current_external_id: str = None
+        self.client_channel_id: str = None
 
     async def handle_events(self, websocket):
         """Обрабатываем события."""
@@ -170,13 +169,16 @@ class WSHandler:
                     [CallStatusDB(status_str=CallStatuses.STASIS_START)])
                 await self.ari_client.dial_channel(channel_id)
 
-            if event_type == 'Dial' and event['dialstatus'] == 'ANSWER':
+            elif event_type == 'Dial' and event['dialstatus'] == 'ANSWER' and event['peer'] == self.client_channel_id:
                 logger.error('Абонент ответил')
                 await self.ari_client.add_channel_to_bridge(
                     self.current_bridge_id, self.current_external_id)
                 await append_status_to_call(
                     self.client_channel_id,
                     [CallStatusDB(status_str=CallStatuses.ANSWERED)])
+
+            elif event_type == 'ChannelHangupRequest':
+                logger.error('Абонент сбросил')
 
     async def connect(self):
         """Подключаемся по WebSocket и обрабатываем события."""
