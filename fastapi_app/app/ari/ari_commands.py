@@ -217,6 +217,7 @@ class WSHandler:
         elif event_var in ['RTPAUDIOQOSLOSS', 'RTPAUDIOQOSLOSSBRIDGED']:
             title = "❌ Потери пакетов (клиент)" if event_var == 'RTPAUDIOQOSLOSS' else "❌ Потери пакетов (externalMedia)"
             data = self.parse_qos_data(value)
+            logger.info(event)
             log_qos_info(title, {
                 "minrxlost": data.get("minrxlost"),
                 "maxrxlost": data.get("maxrxlost"),
@@ -230,6 +231,7 @@ class WSHandler:
 
         elif event_var in ['RTPAUDIOQOSRTT', 'RTPAUDIOQOSRTTBRIDGED']:
             title = "⏱ RTT статистика (клиент)" if event_var == 'RTPAUDIOQOSRTT' else "⏱ RTT статистика (externalMedia)"
+            logger.info(event)
             data = self.parse_qos_data(value)
             log_qos_info(title, {
                 "minrtt": data.get("minrtt"),
@@ -240,6 +242,7 @@ class WSHandler:
 
         elif event_var in ['RTPAUDIOQOSMES', 'RTPAUDIOQOSMESBRIDGED']:
             title = "📐 Media Delay (основной)" if event_var == 'RTPAUDIOQOSMES' else "📐 Media Delay (externalMedia)"
+            logger.info(event)
             data = self.parse_qos_data(value)
             log_qos_info(title, {
                 "minrxmes": data.get("minrxmes"),
@@ -263,16 +266,19 @@ class WSHandler:
         channel_info: dict = event.get('channel', {})
 
         # Mark True if event is related to client_channel
-        client_channel_event = channel_info.get('id') == self.client_channel_id
+        client_channel_event: bool = channel_info.get('id') == self.client_channel_id
 
         # Mark True if client_channel has answered call
+        peer: dict = event.get('peer', {})
+        peer_id, peer_state = peer.get('id'), peer.get('state')
         client_channel_answer = (
             event.get('dialstatus') == 'ANSWER'
-            and event.get('peer', {}).get('id') == self.client_channel_id
+            and peer_id == self.client_channel_id
+            and peer_state == 'Up'
         )
         logger.info(
             f"ОТВЕТИЛИИИИИИ???? {client_channel_answer} а вот почему "
-            f"peer.id, status = {event.get('peer', {}).get('id'), event.get('dialstatus')}"
+            f"peer.id, status, state = {peer_id, event.get('dialstatus'), peer_state}"
         )
         if event_type == 'StasisStart' and client_channel_event:
             logger.error('Приложение получило доступ к управлению')
