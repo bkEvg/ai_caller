@@ -244,8 +244,8 @@ class WSHandler:
         channel_name = channel.get("name", "unknown")
 
         # Обработка событий касающихся стазиса и бриджа
-        self.__handle_bridge_and_stasis_events(event_var, channel_name, value)
-        self.__handle_rtp_statistics_events(event_var, channel_name, value)
+        await self.__handle_bridge_and_stasis_events(event_var, channel_name, value)
+        await self.__handle_rtp_statistics_events(event_var, channel_name, value)
 
     async def handle_client_channel_events(
             self, event_type: str, event: dict) -> None:
