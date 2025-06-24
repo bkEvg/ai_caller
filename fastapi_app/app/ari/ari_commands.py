@@ -166,6 +166,76 @@ class WSHandler:
             for k, v in [kv]
         }
 
+    @staticmethod
+    def log_qos_info(title: str, channel_name: str, parsed: dict):
+        logger.info(f"\n📡 {title} для канала {channel_name}")
+        for k, v in parsed.items():
+            logger.info(f"{k}: {v}")
+
+    async def __handle_bridge_and_stasis_events(
+            self, event_var: str, channel_name: str, value: str):
+        """Обработка событий касающихся стазиса и бриджа."""
+
+        if event_var == 'STASISSTATUS':
+            logger.info(
+                f"Статус подключения к Stasis: {value or 'EMPTY'} для "
+                f"канала {channel_name}")
+
+        elif event_var == 'BRIDGEPEER':
+            logger.info(f"Канал {channel_name} соединён с: {value or 'пусто'}")
+
+        elif event_var == 'BRIDGEPVTCALLID':
+            logger.info(f"🔐 Private Call ID в бридже: {value}")
+
+    async def __handle_rtp_statistics_events(
+            self, event_var: str, channel_name: str, value: str):
+        """Обработка событий касающихся качества соединения/звонка."""
+
+        if event_var in ['RTPAUDIOQOS', 'RTPAUDIOQOSBRIDGED']:
+            title = (
+                "RTP QoS (клиент)"
+                if event_var == 'RTPAUDIOQOS'
+                else "RTP QoS (externalMedia канал)"
+            )
+            data = self.parse_qos_data(value)
+            self.log_qos_info(title, channel_name, data)
+
+        elif event_var in ['RTPAUDIOQOSJITTER', 'RTPAUDIOQOSJITTERBRIDGED']:
+            title = (
+                "Jitter статистика (клиент)"
+                if event_var == 'RTPAUDIOQOSJITTER'
+                else "Jitter статистика (externalMedia)"
+            )
+            data = self.parse_qos_data(value)
+            self.log_qos_info(title, channel_name, data)
+
+        elif event_var in ['RTPAUDIOQOSLOSS', 'RTPAUDIOQOSLOSSBRIDGED']:
+            title = (
+                "Потери пакетов (клиент)"
+                if event_var == 'RTPAUDIOQOSLOSS'
+                else "Потери пакетов (externalMedia)"
+            )
+            data = self.parse_qos_data(value)
+            self.log_qos_info(title, channel_name, data)
+
+        elif event_var in ['RTPAUDIOQOSRTT', 'RTPAUDIOQOSRTTBRIDGED']:
+            title = (
+                "RTT статистика (клиент)"
+                if event_var == 'RTPAUDIOQOSRTT'
+                else "RTT статистика (externalMedia)"
+            )
+            data = self.parse_qos_data(value)
+            self.log_qos_info(title, channel_name, data)
+
+        elif event_var in ['RTPAUDIOQOSMES', 'RTPAUDIOQOSMESBRIDGED']:
+            title = (
+                "Media Delay (основной)"
+                if event_var == 'RTPAUDIOQOSMES'
+                else "Media Delay (externalMedia)"
+            )
+            data = self.parse_qos_data(value)
+            self.log_qos_info(title, channel_name, data)
+
     async def handle_connection_info(self, event_type: str, event: dict) -> None:
         """Обрабатываем информацию приходящую о соединении."""
         event_var = event.get('variable')
@@ -173,94 +243,9 @@ class WSHandler:
         channel = event.get('channel', {})
         channel_name = channel.get("name", "unknown")
 
-        def log_qos_info(title: str, parsed: dict):
-            logger.info(f"\n📡 {title} для канала {channel_name}")
-            for k, v in parsed.items():
-                logger.info(f"{k}: {v}")
-
-        if event_var == 'STASISSTATUS':
-            logger.info(f"🌀 Статус подключения к Stasis: {value or 'EMPTY'} для канала {channel_name}")
-
-        elif event_var == 'BRIDGEPEER':
-            logger.info(f"🔗 Канал {channel_name} соединён с: {value or 'пусто'}")
-
-        elif event_var == 'BRIDGEPVTCALLID':
-            logger.info(f"🔐 Private Call ID в бридже: {value}")
-
-        elif event_var in ['RTPAUDIOQOS', 'RTPAUDIOQOSBRIDGED']:
-            title = "📊 RTP QoS (клиент канал)" if event_var == 'RTPAUDIOQOS' else "📊 RTP QoS (externalMedia канал)"
-            data = self.parse_qos_data(value)
-            log_qos_info(title, {
-                "ssrc": data.get("ssrc"),
-                "themssrc": data.get("themssrc"),
-                "lp (local loss)": data.get("lp"),
-                "rxjitter": data.get("rxjitter"),
-                "rxcount": data.get("rxcount"),
-                "txjitter": data.get("txjitter"),
-                "txcount": data.get("txcount"),
-                "rlp (remote loss)": data.get("rlp"),
-                "rtt (ping round-trip)": data.get("rtt"),
-                "rxmes (media delay recv)": data.get("rxmes"),
-                "txmes (media delay send)": data.get("txmes"),
-            })
-
-        elif event_var in ['RTPAUDIOQOSJITTER', 'RTPAUDIOQOSJITTERBRIDGED']:
-            title = "🎯 Jitter статистика (клиент)" if event_var == 'RTPAUDIOQOSJITTER' else "🎯 Jitter статистика (externalMedia)"
-            data = self.parse_qos_data(value)
-            log_qos_info(title, {
-                "minrxjitter": data.get("minrxjitter"),
-                "maxrxjitter": data.get("maxrxjitter"),
-                "avgrxjitter": data.get("avgrxjitter"),
-                "stdevrxjitter": data.get("stdevrxjitter"),
-                "mintxjitter": data.get("mintxjitter"),
-                "maxtxjitter": data.get("maxtxjitter"),
-                "avgtxjitter": data.get("avgtxjitter"),
-                "stdevtxjitter": data.get("stdevtxjitter"),
-            })
-
-        elif event_var in ['RTPAUDIOQOSLOSS', 'RTPAUDIOQOSLOSSBRIDGED']:
-            title = "❌ Потери пакетов (клиент)" if event_var == 'RTPAUDIOQOSLOSS' else "❌ Потери пакетов (externalMedia)"
-            data = self.parse_qos_data(value)
-            logger.info(event)
-            log_qos_info(title, {
-                "minrxlost": data.get("minrxlost"),
-                "maxrxlost": data.get("maxrxlost"),
-                "avgrxlost": data.get("avgrxlost"),
-                "stdevrxlost": data.get("stdevrxlost"),
-                "mintxlost": data.get("mintxlost"),
-                "maxtxlost": data.get("maxtxlost"),
-                "avgtxlost": data.get("avgtxlost"),
-                "stdevtxlost": data.get("stdevtxlost"),
-            })
-
-        elif event_var in ['RTPAUDIOQOSRTT', 'RTPAUDIOQOSRTTBRIDGED']:
-            title = "⏱ RTT статистика (клиент)" if event_var == 'RTPAUDIOQOSRTT' else "⏱ RTT статистика (externalMedia)"
-            logger.info(event)
-            data = self.parse_qos_data(value)
-            log_qos_info(title, {
-                "minrtt": data.get("minrtt"),
-                "maxrtt": data.get("maxrtt"),
-                "avgrtt": data.get("avgrtt"),
-                "stdevrtt": data.get("stdevrtt"),
-            })
-
-        elif event_var in ['RTPAUDIOQOSMES', 'RTPAUDIOQOSMESBRIDGED']:
-            title = "📐 Media Delay (основной)" if event_var == 'RTPAUDIOQOSMES' else "📐 Media Delay (externalMedia)"
-            logger.info(event)
-            data = self.parse_qos_data(value)
-            log_qos_info(title, {
-                "minrxmes": data.get("minrxmes"),
-                "maxrxmes": data.get("maxrxmes"),
-                "avgrxmes": data.get("avgrxmes"),
-                "stdevrxmes": data.get("stdevrxmes"),
-                "mintxmes": data.get("mintxmes"),
-                "maxtxmes": data.get("maxtxmes"),
-                "avgtxmes": data.get("avgtxmes"),
-                "stdevtxmes": data.get("stdevtxmes"),
-            })
-
-        else:
-            logger.info(f"🔍 Необработанная переменная: {event_var} = {value}")
+        # Обработка событий касающихся стазиса и бриджа
+        self.__handle_bridge_and_stasis_events(event_var, channel_name, value)
+        self.__handle_rtp_statistics_events(event_var, channel_name, value)
 
     async def handle_client_channel_events(
             self, event_type: str, event: dict) -> None:
