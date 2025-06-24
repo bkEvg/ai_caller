@@ -159,9 +159,10 @@ class WSHandler:
         while True:
             message = await websocket.recv()
             event = json.loads(message)
+            logger.error(event)
             event_type = event['type']
             logger.error(event_type)
-            if event_type == 'StasisStart':
+            if event_type == 'StasisStart' and event['state'] == 'Up':
                 logger.error('Приложение получило доступ к управлению')
                 channel_id = event['channel']['id']
                 await append_status_to_call(

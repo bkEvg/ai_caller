@@ -18,11 +18,11 @@ class Base(DeclarativeBase):
 
     id: MappedColumn[int] = mapped_column(primary_key=True)
     created_at: MappedColumn[datetime] = mapped_column(
-        DateTime(True), default=datetime.now(settings.timezone)
+        DateTime(True), default=now
     )
     updated_at: MappedColumn[datetime] = mapped_column(
-        DateTime(True), default=datetime.now(settings.timezone),
-        onupdate=datetime.now(settings.timezone)
+        DateTime(True), default=now,
+        onupdate=now
     )
 
     @declared_attr
