@@ -158,6 +158,14 @@ class WSHandler:
         """Обрабатываем информацию приходящую о соединении."""
         logger.error(event)
         logger.error(event_type)
+        # "Тип" переменной инфы
+        event_var = event.get('variable')
+        if event_var == 'BRIDGEPEER':
+            pass
+        elif event_var == 'RTPAUDIOQOS':
+            pass
+        elif event_var == 'RTPAUDIOQOSBRIDGED':
+            pass
 
     async def handle_client_channel_events(
             self, event_type: str, event: dict) -> None:
@@ -174,10 +182,10 @@ class WSHandler:
             event.get('dialstatus') == 'ANSWER'
             and event.get('peer', {}).get('id') == self.client_channel_id
         )
-        # logger.info(
-        #     f"ОТВЕТИЛИИИИИИ???? {client_channel_answer} а вот почему "
-        #     f"peer.id, status = {event.get('peer', {}).get('id'), event.get('dialstatus')}"
-        # )
+        logger.info(
+            f"ОТВЕТИЛИИИИИИ???? {client_channel_answer} а вот почему "
+            f"peer.id, status = {event.get('peer', {}).get('id'), event.get('dialstatus')}"
+        )
         if event_type == 'StasisStart' and client_channel_event:
             logger.error('Приложение получило доступ к управлению')
             await append_status_to_call(
@@ -196,10 +204,13 @@ class WSHandler:
         elif event_type == 'ChannelHangupRequest' and client_channel_event:
             logger.error('Абонент сбросил')
 
-    async def handle_events(self, websocket):
+    async def handle_events(self, websocket: websockets.ClientConnection):
         """Обрабатываем websocket события."""
-        while True:
-            message = await websocket.recv()
+        # while True:
+        # message = await websocket.recv()
+        async for message in websocket:
+            logger.info(message)
+            logger.info(type(message))
             event = json.loads(message)
             event_type = event['type']
             await self.handle_client_channel_events(event_type, event)
