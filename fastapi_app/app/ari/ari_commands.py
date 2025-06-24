@@ -293,6 +293,7 @@ class WSHandler:
 
         elif event_type == 'Dial' and client_channel_answer:
             logger.error('Абонент ответил')
+            logger.info(event)
             await self.ari_client.add_channel_to_bridge(
                 self.current_bridge_id, self.current_external_id)
             await append_status_to_call(
