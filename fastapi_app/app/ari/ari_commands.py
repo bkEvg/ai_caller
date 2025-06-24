@@ -153,6 +153,34 @@ class WSHandler:
         self.current_external_id: str = None
         self.client_channel_id: str = None
 
+    async def handle_client_channel_events(self, event_type: str, event: dict):
+        # Client channel info
+        channel_info: dict = event.get('channel', {})
+        # Mark True if event is related to client_channel
+        client_channel_event = channel_info.get('id') == self.client_channel_id
+        # Mark True if client_channel has answered call
+        client_channel_answer = (
+            event.get('dialstatus') == 'ANSWER'
+            and event.get('peer') == self.client_channel_id
+        )
+        if event_type == 'StasisStart' and client_channel_event:
+            logger.error('Приложение получило доступ к управлению')
+            await append_status_to_call(
+                self.client_channel_id,
+                [CallStatusDB(status_str=CallStatuses.STASIS_START)])
+            await self.ari_client.dial_channel(self.client_channel_id)
+
+        elif event_type == 'Dial' and client_channel_answer:
+            logger.error('Абонент ответил')
+            await self.ari_client.add_channel_to_bridge(
+                self.current_bridge_id, self.current_external_id)
+            await append_status_to_call(
+                self.client_channel_id,
+                [CallStatusDB(status_str=CallStatuses.ANSWERED)])
+
+        elif event_type == 'ChannelHangupRequest' and client_channel_event:
+            logger.error('Абонент сбросил')
+
     async def handle_events(self, websocket):
         """Обрабатываем события."""
         while True:
@@ -161,24 +189,7 @@ class WSHandler:
             logger.error(event)
             event_type = event['type']
             logger.error(event_type)
-            if event_type == 'StasisStart':
-                logger.error('Приложение получило доступ к управлению')
-                channel_id = event['channel']['id']
-                await append_status_to_call(
-                    self.client_channel_id,
-                    [CallStatusDB(status_str=CallStatuses.STASIS_START)])
-                await self.ari_client.dial_channel(channel_id)
-
-            elif event_type == 'Dial' and event['dialstatus'] == 'ANSWER' and event['peer'] == self.client_channel_id:
-                logger.error('Абонент ответил')
-                await self.ari_client.add_channel_to_bridge(
-                    self.current_bridge_id, self.current_external_id)
-                await append_status_to_call(
-                    self.client_channel_id,
-                    [CallStatusDB(status_str=CallStatuses.ANSWERED)])
-
-            elif event_type == 'ChannelHangupRequest':
-                logger.error('Абонент сбросил')
+            await self.handle_client_channel_events(event_type, event)
 
     async def connect(self):
         """Подключаемся по WebSocket и обрабатываем события."""
