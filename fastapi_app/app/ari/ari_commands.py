@@ -155,12 +155,16 @@ class WSHandler:
 
     @staticmethod
     def parse_qos_data(value: str) -> dict:
-        """Парсит строку формата key=value;key=value в словарь."""
-        return dict(
-            item.split('=')
+        """
+        Парсит строку формата key=value;key=value в словарь,
+        очищая пробелы.
+        """
+        return {
+            k.strip(): v.strip()
             for item in value.strip(';').split(';')
-            if '=' in item
-        )
+            if '=' in item and (kv := item.split('=', 1)) and len(kv) == 2
+            for k, v in [kv]
+        }
 
     async def handle_connection_info(self, event_type: str, event: dict) -> None:
         """Обрабатываем информацию приходящую о соединении."""
