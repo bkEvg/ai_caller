@@ -161,15 +161,19 @@ class WSHandler:
     async def handle_client_channel_events(
             self, event_type: str, event: dict) -> None:
         """Обрабатываем события относящиеся только к Клиентскому каналу."""
+
         # Client channel info
         channel_info: dict = event.get('channel', {})
+
         # Mark True if event is related to client_channel
         client_channel_event = channel_info.get('id') == self.client_channel_id
+
         # Mark True if client_channel has answered call
         client_channel_answer = (
             event.get('dialstatus') == 'ANSWER'
-            and event.get('peer') == self.client_channel_id
+            and event.get('peer', {}).get('id') == self.client_channel_id
         )
+        logger.info(f'ОТВЕТИЛИИИИИИ???? {client_channel_answer} а вот почему peer.id, status = {event.get('peer', {}).get('id'), event.get('dialstatus')}')
         if event_type == 'StasisStart' and client_channel_event:
             logger.error('Приложение получило доступ к управлению')
             await append_status_to_call(
