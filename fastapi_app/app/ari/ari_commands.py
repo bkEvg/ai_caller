@@ -265,10 +265,10 @@ class WSHandler:
             and peer_id == self.client_channel_id
             and peer_state == 'Up'
         )
-        logger.info(
-            f"ОТВЕТИЛИИИИИИ???? {client_channel_answer} а вот почему "
-            f"peer.id, status, state = {peer_id, event.get('dialstatus'), peer_state}"
-        )
+        # logger.info(
+        #     f"ОТВЕТИЛИИИИИИ???? {client_channel_answer} а вот почему "
+        #     f"peer.id, status, state = {peer_id, event.get('dialstatus'), peer_state}"
+        # )
         if event_type == 'StasisStart' and client_channel_event:
             logger.error('Приложение получило доступ к управлению')
             await append_status_to_call(
