@@ -162,7 +162,7 @@ class WSHandler:
             logger.error(event)
             event_type = event['type']
             logger.error(event_type)
-            if event_type == 'StasisStart' and event['state'] == 'Up':
+            if event_type == 'StasisStart':
                 logger.error('Приложение получило доступ к управлению')
                 channel_id = event['channel']['id']
                 await append_status_to_call(
