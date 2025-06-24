@@ -153,7 +153,9 @@ class WSHandler:
         self.current_external_id: str = None
         self.client_channel_id: str = None
 
-    async def handle_client_channel_events(self, event_type: str, event: dict):
+    async def handle_client_channel_events(
+            self, event_type: str, event: dict) -> None:
+        """Обрабатываем события относящиеся только к Клиентскому каналу."""
         # Client channel info
         channel_info: dict = event.get('channel', {})
         # Mark True if event is related to client_channel
@@ -182,12 +184,12 @@ class WSHandler:
             logger.error('Абонент сбросил')
 
     async def handle_events(self, websocket):
-        """Обрабатываем события."""
+        """Обрабатываем websocket события."""
         while True:
             message = await websocket.recv()
             event = json.loads(message)
-            logger.error(event)
             event_type = event['type']
+            logger.error(event)
             logger.error(event_type)
             await self.handle_client_channel_events(event_type, event)
 
