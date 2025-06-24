@@ -153,13 +153,17 @@ class WSHandler:
         self.current_external_id: str = None
         self.client_channel_id: str = None
 
+    @staticmethod
     def parse_qos_data(value: str) -> dict:
         """Парсит строку формата key=value;key=value в словарь."""
-        return dict(item.split('=') for item in value.strip(';').split(';') if '=' in item)
+        return dict(
+            item.split('=')
+            for item in value.strip(';').split(';')
+            if '=' in item
+        )
 
     async def handle_connection_info(self, event_type: str, event: dict) -> None:
         """Обрабатываем информацию приходящую о соединении."""
-        logger.error(event)
         event_var = event.get('variable')
         value = event.get('value', '')
         channel = event.get('channel', {})
@@ -180,7 +184,7 @@ class WSHandler:
             logger.info(f"🔐 Private Call ID в бридже: {value}")
 
         elif event_var in ['RTPAUDIOQOS', 'RTPAUDIOQOSBRIDGED']:
-            title = "📊 RTP QoS (основной канал)" if event_var == 'RTPAUDIOQOS' else "📊 RTP QoS (bridged канал)"
+            title = "📊 RTP QoS (клиент канал)" if event_var == 'RTPAUDIOQOS' else "📊 RTP QoS (externalMedia канал)"
             data = self.parse_qos_data(value)
             log_qos_info(title, {
                 "ssrc": data.get("ssrc"),
@@ -197,7 +201,7 @@ class WSHandler:
             })
 
         elif event_var in ['RTPAUDIOQOSJITTER', 'RTPAUDIOQOSJITTERBRIDGED']:
-            title = "🎯 Jitter статистика (основной)" if event_var == 'RTPAUDIOQOSJITTER' else "🎯 Jitter статистика (bridged)"
+            title = "🎯 Jitter статистика (клиент)" if event_var == 'RTPAUDIOQOSJITTER' else "🎯 Jitter статистика (externalMedia)"
             data = self.parse_qos_data(value)
             log_qos_info(title, {
                 "minrxjitter": data.get("minrxjitter"),
@@ -211,7 +215,7 @@ class WSHandler:
             })
 
         elif event_var in ['RTPAUDIOQOSLOSS', 'RTPAUDIOQOSLOSSBRIDGED']:
-            title = "❌ Потери пакетов (основной)" if event_var == 'RTPAUDIOQOSLOSS' else "❌ Потери пакетов (bridged)"
+            title = "❌ Потери пакетов (клиент)" if event_var == 'RTPAUDIOQOSLOSS' else "❌ Потери пакетов (externalMedia)"
             data = self.parse_qos_data(value)
             log_qos_info(title, {
                 "minrxlost": data.get("minrxlost"),
@@ -225,7 +229,7 @@ class WSHandler:
             })
 
         elif event_var in ['RTPAUDIOQOSRTT', 'RTPAUDIOQOSRTTBRIDGED']:
-            title = "⏱ RTT статистика (основной)" if event_var == 'RTPAUDIOQOSRTT' else "⏱ RTT статистика (bridged)"
+            title = "⏱ RTT статистика (клиент)" if event_var == 'RTPAUDIOQOSRTT' else "⏱ RTT статистика (externalMedia)"
             data = self.parse_qos_data(value)
             log_qos_info(title, {
                 "minrtt": data.get("minrtt"),
@@ -235,7 +239,7 @@ class WSHandler:
             })
 
         elif event_var in ['RTPAUDIOQOSMES', 'RTPAUDIOQOSMESBRIDGED']:
-            title = "📐 Media Delay (основной)" if event_var == 'RTPAUDIOQOSMES' else "📐 Media Delay (bridged)"
+            title = "📐 Media Delay (основной)" if event_var == 'RTPAUDIOQOSMES' else "📐 Media Delay (externalMedia)"
             data = self.parse_qos_data(value)
             log_qos_info(title, {
                 "minrxmes": data.get("minrxmes"),
@@ -293,7 +297,6 @@ class WSHandler:
         # while True:
         # message = await websocket.recv()
         async for message in websocket:
-            logger.info(message)
             event = json.loads(message)
             event_type = event['type']
             await self.handle_client_channel_events(event_type, event)
