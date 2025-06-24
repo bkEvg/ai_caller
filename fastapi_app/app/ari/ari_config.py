@@ -8,7 +8,7 @@ load_dotenv()
 HOST = os.environ.get('ARI_IP')
 EXTERNAL_HOST = os.environ.get('ARI_EXTERNAL_IP_HOST')
 ARI_HOST = f"http://{HOST}/ari"
-ARI_TIMEOUT = 20
+ARI_TIMEOUT = 60
 SIP_HOST = os.environ.get('SIP_HOST')
 ARI_USER = os.environ.get('ARI_USER')
 ARI_PASSWORD = os.environ.get('ARI_PASS')
