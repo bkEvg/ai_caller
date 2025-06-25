@@ -17,6 +17,11 @@ DEFAULT_LANG = 'ru'
 INPUT_FORMAT = 'g711_alaw'
 OUTPUT_FORMAT = 'pcm16'
 
+BYTES_ENCODING = 'utf-8'
+
+UUID_TYPE = 0x01
+AUDIO_TYPE = 0x10
+
 
 REALTIME_MODEL = "gpt-4o-mini-realtime-preview-2024-12-17"
 REALTIME_URL = f"wss://api.openai.com/v1/realtime?model={REALTIME_MODEL}"
