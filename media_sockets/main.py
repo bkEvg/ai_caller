@@ -37,15 +37,39 @@ class AudioHandler:
             self.playback_task = asyncio.create_task(self._playback_loop())
 
     async def _playback_loop(self):
+        """
+        Основной цикл воспроизведения аудио.
+        
+        Собирает чанки в батчи для более стабильного ресэмплинга,
+        чтобы избежать артефактов и изменения тембра голоса.
+        """
         while not self.stop_playback_flag:
             try:
-                audio_data = await self.audio_queue.get()
-                try:
-                    await self.play_audio(audio_data)
-                finally:
-                    self.audio_queue.task_done()
+                # Ждем первый чанк, чтобы начать цикл
+                first_chunk = await self.audio_queue.get()
+
+                # Собираем все доступные чанки в один батч
+                chunks_to_process = [first_chunk]
+                while not self.audio_queue.empty():
+                    chunks_to_process.append(self.audio_queue.get_nowait())
+
+                # Объединяем в один большой кусок данных
+                audio_batch = b"".join(chunks_to_process)
+
+                if audio_batch:
+                    # Теперь проигрываем весь батч
+                    try:
+                        await self.play_audio(audio_batch)
+                    finally:
+                        # Помечаем все задачи в батче как выполненные
+                        for _ in chunks_to_process:
+                            self.audio_queue.task_done()
+
+            except asyncio.CancelledError:
+                logger.info("Playback loop cancelled.")
+                break
             except Exception as e:
-                logger.error(f"Ошибка при воспроизведении: {e}")
+                logger.error(f"Ошибка в цикле воспроизведения: {e}")
 
     async def enqueue_audio(self, audio_data):
         await self.audio_queue.put(audio_data)
