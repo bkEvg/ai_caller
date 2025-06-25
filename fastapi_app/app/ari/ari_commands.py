@@ -168,7 +168,7 @@ class WSHandler:
 
     @staticmethod
     def log_qos_info(title: str, channel_name: str, parsed: dict):
-        logger.info(f"\n📡 {title} для канала {channel_name}")
+        logger.info(f"{title} для канала {channel_name}")
         for k, v in parsed.items():
             logger.info(f"{k}: {v}")
 

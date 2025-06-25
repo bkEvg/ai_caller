@@ -10,7 +10,8 @@ from src.constants import (OPENAI_API_KEY, REALTIME_MODEL, HOST, PORT,
                            OUTPUT_FORMAT, INPUT_FORMAT, DEFAULT_SAMPLE_RATE,
                            DEFAULT_SAMPLE_WIDTH, OPENAI_OUTPUT_RATE,
                            DRAIN_CHUNK_SIZE, READER_BYTES_LIMIT,
-                           INTERRUPT_PAUSE)
+                           INTERRUPT_PAUSE, AUDIO_TYPE, UUID_TYPE,
+                           BYTES_ENCODING)
 from src.utils import AudioSocketParser, AudioConverter
 from src.instructions import INSTRUCTIONS, DEFAULT_PROMPT
 
@@ -95,7 +96,10 @@ class AudioWebSocketClient:
     Handles interaction with OpenAI Realtime API via WebSocket.
     Adapted to work with reader and writer for audio socket communication.
     """
-    def __init__(self, reader, writer, instructions, voice="alloy"):
+    def __init__(
+            self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter,
+            instructions: str, voice="alloy"):
+
         self.reader = reader
         self.writer = writer
         self.url = "wss://api.openai.com/v1/realtime"
@@ -104,6 +108,7 @@ class AudioWebSocketClient:
         self.ws = None
         self.audio_handler = AudioHandler(self.writer)
         self.recieve_events = True
+        self.revieve_rtp = True
         self.recieve_timeout = 60
 
         self.ssl_context = ssl.create_default_context()
@@ -122,7 +127,7 @@ class AudioWebSocketClient:
             "type": "server_vad",
             # Activation threshold (0.0-1.0). A higher threshold will require
             # louder audio to activate the model.
-            "threshold": 0.3,
+            "threshold": 0.6,
             # Audio to include before the VAD detected speech.
             "prefix_padding_ms": 300,
             # Silence to detect speech stop. With lower values the model
@@ -245,7 +250,7 @@ class AudioWebSocketClient:
         parser = AudioSocketParser()
 
         try:
-            while True:
+            while self.revieve_rtp:
                 # Receive audio data from reader
                 data = await self.reader.read(READER_BYTES_LIMIT)
                 if data:
@@ -253,16 +258,15 @@ class AudioWebSocketClient:
                     parse_result = parser.parse_packet()
                     if parse_result:
                         packet_type, packet_length, payload = parse_result
-                        if packet_type == 0x01:
+                        if packet_type == UUID_TYPE:
                             stream_uuid = str(uuid.UUID(bytes=payload))
-                            if stream_uuid == "f47ac10b-58cc-4372-a567-0e02b2c3d479":
-                                self.instructions = DEFAULT_PROMPT
                             logger.info(
                                 f"Получен UUID потока: {stream_uuid}"
                             )
                             await self.background_tasks()
-                        elif packet_type == 0x10:
-                            base64_data = base64.b64encode(payload).decode('utf-8')
+                        elif packet_type == AUDIO_TYPE:
+                            base64_data = base64.b64encode(
+                                payload).decode(BYTES_ENCODING)
                             await self.send_event({
                                 "type": "input_audio_buffer.append",
                                 "audio": base64_data
